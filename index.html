@@ -46,6 +46,7 @@
             background: rgba(255, 255, 255, 0.6); 
             border-radius: 18px; padding: 15px;
             border: 1px solid #fce3e4; min-height: 120px; max-height: 180px; overflow-y: auto;
+            transition: all 0.3s ease;
         }
         
         .student-chip {
@@ -60,14 +61,12 @@
             text-decoration: line-through; box-shadow: none; border: none;
         }
         
-        /* 인원 조절 버튼 */
         .counter-btn {
             background: #fff; color: var(--primary-color); font-weight: 900; font-size: 1.2rem;
             width: 45px; border: none; transition: 0.2s; cursor: pointer;
         }
         .counter-btn:hover { background: #ffe4e6; }
         
-        /* 메인 뽑기 버튼 */
         .btn-main { 
             border-radius: 16px; padding: 15px 25px; font-weight: 800; font-size: 1.2rem;
             background-color: var(--primary-color); border: none; color: white;
@@ -80,7 +79,6 @@
         }
         .btn-main:disabled { background-color: #fcaeb3; }
         
-        /* 옵션 버튼 (명단 초기화, 당첨자 제외) */
         .btn-option {
             border-radius: 12px; padding: 12px; font-weight: 700;
             transition: all 0.2s;
@@ -88,7 +86,6 @@
         .btn-outline-custom { color: #b28b97; border-color: #e6d3d8; background: #fff; }
         .btn-outline-custom:hover { background-color: #f7eef0; color: #8e6875; }
         
-        /* 직관적인 스위치 형태의 체크박스 */
         .form-check-input:checked {
             background-color: var(--primary-color);
             border-color: var(--primary-color);
@@ -125,9 +122,15 @@
         
         <div class="mb-4">
             <div class="d-flex justify-content-between align-items-end mb-2 px-2">
-                <span class="fw-bold" style="color: #8c7b81;">학생 현황</span>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fw-bold" style="color: #8c7b81;">학생 현황</span>
+                    <button id="toggleListBtn" onclick="toggleList()" class="btn btn-sm shadow-sm" style="background: #fff; border: 1px solid #fce3e4; color: #b28b97; border-radius: 10px; font-size: 0.8rem; padding: 4px 10px; font-weight: bold;">
+                        🙈 명단 숨기기
+                    </button>
+                </div>
                 <span id="statText" class="badge rounded-pill" style="background-color: #ffccd0; color: #d65a62; font-size: 0.85rem;">총 0명 / 남은 0명</span>
             </div>
+            
             <div id="studentListBox" class="student-list-container text-start shadow-sm">
             </div>
         </div>
@@ -204,12 +207,13 @@
 <script>
     let pickerDB = JSON.parse(localStorage.getItem('mathPickerDB_v3')) || {};
     let currentClass = Object.keys(pickerDB)[0] || "";
+    let isListVisible = true; // 명단 숨기기 상태 변수
 
     window.onload = () => {
         updateClassDropdown();
         updateAdminModalList();
         renderUI(true);
-        toggleRemoveOption(); // 스위치 초기 상태 적용
+        toggleRemoveOption(); 
     };
 
     function updateClassDropdown() {
@@ -279,9 +283,31 @@
         bulkInput.value = data.total.join(' ');
         
         checkMaxCount();
+        applyListVisibility(); // UI 렌더링 시 숨기기 상태 유지
     }
 
-    // 🌟 직관적인 토글 버튼 로직 🌟
+    // 🌟 명단 숨기기/보이기 로직 🌟
+    function toggleList() {
+        isListVisible = !isListVisible;
+        applyListVisibility();
+    }
+
+    function applyListVisibility() {
+        const listContainer = document.getElementById('studentListBox');
+        const btn = document.getElementById('toggleListBtn');
+        if (!listContainer || !btn) return;
+
+        if (isListVisible) {
+            listContainer.style.display = 'block';
+            btn.innerText = '🙈 명단 숨기기';
+            btn.style.color = '#b28b97';
+        } else {
+            listContainer.style.display = 'none';
+            btn.innerText = '👁️ 명단 보이기';
+            btn.style.color = '#ff8b94';
+        }
+    }
+
     function toggleRemoveOption() {
         const isChecked = document.getElementById('removeOption').checked;
         const wrapper = document.getElementById('toggleWrapper');
@@ -380,7 +406,6 @@
         btn.disabled = true;
         display.style.fontSize = "4.5rem"; 
 
-        // 음악 재생 시작
         bgm.play().catch(() => { console.log("음악 자동재생 차단됨"); });
 
         let count = 0;
@@ -391,7 +416,6 @@
             if (count > 25) {
                 clearInterval(timer);
                 
-                // 음악 멈추고 효과음 재생
                 bgm.pause();
                 bgm.currentTime = 0;
                 winSound.play();
