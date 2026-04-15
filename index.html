@@ -6,6 +6,7 @@
     <title>스마트 발표자 뽑기 - 수학 시간</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         :root { --primary-color: #4a90e2; --accent-color: #ff6b6b; }
         body { background-color: #f4f7fa; font-family: 'Pretendard', sans-serif; color: #333; }
@@ -19,7 +20,6 @@
             font-size: 4.5rem; font-weight: 900; color: var(--primary-color); 
             background: #fff; border-radius: 20px; margin-bottom: 25px;
             border: 3px solid #eef2f7; text-shadow: 2px 2px 4px rgba(0,0,0,0.05);
-            transition: transform 0.2s;
         }
         .student-list-container {
             background: #fdfdfd; border-radius: 15px; padding: 15px;
@@ -31,10 +31,6 @@
         }
         .student-chip.picked { background: #fee; color: #fcc; text-decoration: line-through; }
         .btn-main { border-radius: 12px; padding: 12px 25px; font-weight: 700; transition: 0.3s; }
-        .btn-primary { background-color: var(--primary-color); border: none; }
-        .btn-primary:hover { background-color: #357abd; transform: translateY(-2px); }
-        .btn-config { border-radius: 12px; }
-        .badge-info { font-size: 0.8rem; font-weight: 400; color: #aaa; }
     </style>
 </head>
 <body>
@@ -43,12 +39,12 @@
     <div class="glass-card text-center">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h3 class="fw-bold m-0">🎲 발표자 뽑기</h3>
-            <button class="btn btn-light btn-config border shadow-sm" data-bs-toggle="modal" data-bs-target="#adminModal">⚙️ 관리</button>
+            <button class="btn btn-light border shadow-sm" data-bs-toggle="modal" data-bs-target="#adminModal">⚙️ 학급 관리</button>
         </div>
 
         <div class="mb-4">
             <select id="classSelect" class="form-select form-select-lg border-0 bg-light rounded-4 fw-bold text-center" onchange="renderUI()">
-                </select>
+            </select>
         </div>
 
         <div id="display-area">반 추가 필요</div>
@@ -56,10 +52,10 @@
         <div class="mb-4">
             <div class="d-flex justify-content-between align-items-end mb-2">
                 <span class="fw-bold text-secondary">학생 현황</span>
-                <span id="statText" class="badge-info">총 0명 / 남은 0명</span>
+                <span id="statText" class="badge text-bg-light">총 0명 / 남은 0명</span>
             </div>
             <div id="studentListBox" class="student-list-container text-start">
-                </div>
+            </div>
         </div>
 
         <div class="d-grid gap-3">
@@ -68,6 +64,17 @@
                 <button onclick="resetCurrentClass()" class="btn btn-outline-warning border-2 fw-bold" id="resetBtn" disabled>명단 초기화</button>
                 <input type="checkbox" class="btn-check" id="removeOption" checked>
                 <label class="btn btn-outline-danger border-2 fw-bold" for="removeOption">당첨자 제외</label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="winnerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0 rounded-4" style="background: linear-gradient(135deg, #4a90e2, #6a11cb);">
+            <div class="modal-body p-5 text-center text-white">
+                <h4 class="mb-3 opacity-75">🎉 오늘의 발표자 🎉</h4>
+                <h1 class="display-1 fw-bold mb-0 text-shadow" id="winnerName">학생이름</h1>
             </div>
         </div>
     </div>
@@ -88,13 +95,11 @@
                             <input type="text" id="newClassName" class="form-control" placeholder="예: 3반">
                             <button class="btn btn-primary" onclick="addClass()">추가</button>
                         </div>
-                        <ul id="classListGroup" class="list-group shadow-sm">
-                            </ul>
+                        <ul id="classListGroup" class="list-group shadow-sm"></ul>
                     </div>
                     <div class="col-md-7">
                         <label class="fw-bold mb-2 text-primary">2. 명단 넣기 <span id="editingClassName" class="text-danger small"></span></label>
-                        <textarea id="bulkNameInput" class="form-control" rows="8" 
-                            placeholder="반을 먼저 추가하고 선택한 뒤, 여기에 명단을 붙여넣으세요. (공백 또는 줄바꿈으로 구분)" disabled></textarea>
+                        <textarea id="bulkNameInput" class="form-control" rows="8" placeholder="반을 먼저 추가하고 선택한 뒤, 여기에 명단을 붙여넣으세요." disabled></textarea>
                         <button class="btn btn-dark w-100 mt-3 fw-bold" onclick="saveBulkNames()" id="saveNamesBtn" disabled>명단 저장하기</button>
                     </div>
                 </div>
@@ -104,8 +109,7 @@
 </div>
 
 <script>
-    // 아예 빈 객체({})로 시작합니다.
-    let pickerDB = JSON.parse(localStorage.getItem('mathPickerDB_v2')) || {};
+    let pickerDB = JSON.parse(localStorage.getItem('mathPickerDB_v3')) || {};
     let currentClass = Object.keys(pickerDB)[0] || "";
 
     window.onload = () => {
@@ -143,11 +147,8 @@
             listBox.innerHTML = '<div class="text-center text-muted mt-4">⚙️ 우측 상단의 관리 버튼을 눌러 반을 생성하세요.</div>';
             display.innerText = "반 추가 필요";
             document.getElementById('editingClassName').innerText = "(선택된 반 없음)";
-            bulkInput.value = "";
-            bulkInput.disabled = true;
-            saveBtn.disabled = true;
-            pickBtn.disabled = true;
-            resetBtn.disabled = true;
+            bulkInput.value = ""; bulkInput.disabled = true;
+            saveBtn.disabled = true; pickBtn.disabled = true; resetBtn.disabled = true;
             return;
         }
 
@@ -171,8 +172,7 @@
 
         resetBtn.disabled = false;
         document.getElementById('editingClassName').innerText = `[ ${currentClass} 편집 중 ]`;
-        bulkInput.disabled = false;
-        saveBtn.disabled = false;
+        bulkInput.disabled = false; saveBtn.disabled = false;
         bulkInput.value = data.total.join(' ');
     }
 
@@ -182,16 +182,15 @@
         if (pickerDB[name]) return alert("이미 존재하는 반 이름입니다.");
         
         pickerDB[name] = { total: [], picked: [] };
-        currentClass = name; // 새로 만든 반을 바로 선택
-        
+        currentClass = name;
         document.getElementById('newClassName').value = '';
         saveAndRefresh();
     }
 
     function deleteClass(name) {
-        if (confirm(`정말 '${name}'을(를) 삭제하시겠습니까? 명단도 모두 날아갑니다.`)) {
+        if (confirm(`정말 '${name}'을(를) 삭제하시겠습니까?`)) {
             delete pickerDB[name];
-            currentClass = Object.keys(pickerDB)[0] || ""; // 삭제 후 첫 번째 반으로 이동하거나 비움
+            currentClass = Object.keys(pickerDB)[0] || "";
             saveAndRefresh();
         }
     }
@@ -204,7 +203,7 @@
         pickerDB[currentClass].total = names;
         pickerDB[currentClass].picked = [];
         saveAndRefresh();
-        alert(`[${currentClass}] 명단 ${names.length}명이 저장되었습니다.`);
+        alert(`[${currentClass}] 명단이 저장되었습니다.`);
     }
 
     function resetCurrentClass() {
@@ -227,26 +226,42 @@
 
         let count = 0;
         const timer = setInterval(() => {
+            // 돌아가는 중에는 화면 가운데 글씨만 바뀝니다.
             display.innerText = pool[Math.floor(Math.random() * pool.length)];
             count++;
-            if (count > 20) {
+            
+            if (count > 25) {
                 clearInterval(timer);
+                
+                // 최종 당첨자 결정!
                 const final = pool[Math.floor(Math.random() * pool.length)];
                 display.innerText = final;
-                display.style.transform = "scale(1.2)";
-                setTimeout(() => { display.style.transform = "scale(1)"; }, 200);
 
+                // 중복 제외 처리
                 if (isRemove) {
                     data.picked.push(final);
                     saveAndRefresh();
                 }
                 btn.disabled = false;
+
+                // 🌟 추가된 기능: 팝업 띄우기 및 폭죽 효과 🌟
+                document.getElementById('winnerName').innerText = final; // 팝업창 이름 변경
+                const winnerModal = new bootstrap.Modal(document.getElementById('winnerModal'));
+                winnerModal.show(); // 팝업창 띄우기
+
+                // 폭죽 팡팡!
+                confetti({
+                    particleCount: 150,
+                    spread: 80,
+                    origin: { y: 0.6 },
+                    colors: ['#26ccff', '#a25afd', '#ff5e7e', '#88ff5a', '#fcff42']
+                });
             }
-        }, 60);
+        }, 50);
     }
 
     function saveAndRefresh() {
-        localStorage.setItem('mathPickerDB_v2', JSON.stringify(pickerDB));
+        localStorage.setItem('mathPickerDB_v3', JSON.stringify(pickerDB));
         updateClassDropdown();
         updateAdminModalList();
         renderUI();
