@@ -16,14 +16,14 @@
         }
         #display-area { 
             height: 220px; display: flex; align-items: center; justify-content: center; 
-            font-size: 5rem; font-weight: 900; color: var(--primary-color); 
+            font-size: 4.5rem; font-weight: 900; color: var(--primary-color); 
             background: #fff; border-radius: 20px; margin-bottom: 25px;
             border: 3px solid #eef2f7; text-shadow: 2px 2px 4px rgba(0,0,0,0.05);
             transition: transform 0.2s;
         }
         .student-list-container {
             background: #fdfdfd; border-radius: 15px; padding: 15px;
-            border: 1px solid #edf2f7; min-height: 100px; max-height: 180px; overflow-y: auto;
+            border: 1px solid #edf2f7; min-height: 120px; max-height: 180px; overflow-y: auto;
         }
         .student-chip {
             display: inline-block; padding: 4px 12px; margin: 4px;
@@ -43,15 +43,15 @@
     <div class="glass-card text-center">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h3 class="fw-bold m-0">🎲 발표자 뽑기</h3>
-            <button class="btn btn-light btn-config" data-bs-toggle="modal" data-bs-target="#adminModal">⚙️ 관리</button>
+            <button class="btn btn-light btn-config border shadow-sm" data-bs-toggle="modal" data-bs-target="#adminModal">⚙️ 관리</button>
         </div>
 
         <div class="mb-4">
-            <select id="classSelect" class="form-select form-select-lg border-0 bg-light rounded-4" onchange="renderUI()">
+            <select id="classSelect" class="form-select form-select-lg border-0 bg-light rounded-4 fw-bold text-center" onchange="renderUI()">
                 </select>
         </div>
 
-        <div id="display-area">Ready!</div>
+        <div id="display-area">반 추가 필요</div>
         
         <div class="mb-4">
             <div class="d-flex justify-content-between align-items-end mb-2">
@@ -63,9 +63,9 @@
         </div>
 
         <div class="d-grid gap-3">
-            <button id="pickBtn" onclick="startRolling()" class="btn btn-primary btn-lg btn-main shadow-sm">뽑기 시작</button>
+            <button id="pickBtn" onclick="startRolling()" class="btn btn-primary btn-lg btn-main shadow-sm" disabled>뽑기 시작</button>
             <div class="btn-group w-100 shadow-sm">
-                <button onclick="resetCurrentClass()" class="btn btn-outline-warning border-2 fw-bold">명단 초기화</button>
+                <button onclick="resetCurrentClass()" class="btn btn-outline-warning border-2 fw-bold" id="resetBtn" disabled>명단 초기화</button>
                 <input type="checkbox" class="btn-check" id="removeOption" checked>
                 <label class="btn btn-outline-danger border-2 fw-bold" for="removeOption">당첨자 제외</label>
             </div>
@@ -76,26 +76,26 @@
 <div class="modal fade" id="adminModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content border-0 rounded-4">
-            <div class="modal-header border-0">
+            <div class="modal-header border-0 pb-0">
                 <h5 class="modal-title fw-bold">학급 및 명단 관리</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
                 <div class="row g-4">
                     <div class="col-md-5">
-                        <label class="fw-bold mb-2">반 목록 관리</label>
+                        <label class="fw-bold mb-2 text-primary">1. 반 만들기</label>
                         <div class="input-group mb-3">
-                            <input type="text" id="newClassName" class="form-control" placeholder="예: 1-1">
+                            <input type="text" id="newClassName" class="form-control" placeholder="예: 3반">
                             <button class="btn btn-primary" onclick="addClass()">추가</button>
                         </div>
-                        <ul id="classListGroup" class="list-group">
+                        <ul id="classListGroup" class="list-group shadow-sm">
                             </ul>
                     </div>
                     <div class="col-md-7">
-                        <label class="fw-bold mb-2">명단 일괄 입력 <span id="editingClassName" class="text-primary"></span></label>
-                        <textarea id="bulkNameInput" class="form-control" rows="10" 
-                            placeholder="학생 이름을 복사해서 붙여넣으세요.&#10;(공백, 쉼표, 줄바꿈으로 구분)"></textarea>
-                        <button class="btn btn-dark w-100 mt-3" onclick="saveBulkNames()">선택된 반에 명단 저장</button>
+                        <label class="fw-bold mb-2 text-primary">2. 명단 넣기 <span id="editingClassName" class="text-danger small"></span></label>
+                        <textarea id="bulkNameInput" class="form-control" rows="8" 
+                            placeholder="반을 먼저 추가하고 선택한 뒤, 여기에 명단을 붙여넣으세요. (공백 또는 줄바꿈으로 구분)" disabled></textarea>
+                        <button class="btn btn-dark w-100 mt-3 fw-bold" onclick="saveBulkNames()" id="saveNamesBtn" disabled>명단 저장하기</button>
                     </div>
                 </div>
             </div>
@@ -104,85 +104,122 @@
 </div>
 
 <script>
-    // 데이터 구조: { "반이름": { total: [], picked: [] } }
-    let pickerDB = JSON.parse(localStorage.getItem('mathPickerDB')) || { "1학년 1반": { total: [], picked: [] } };
-    let currentClass = Object.keys(pickerDB)[0];
+    // 아예 빈 객체({})로 시작합니다.
+    let pickerDB = JSON.parse(localStorage.getItem('mathPickerDB_v2')) || {};
+    let currentClass = Object.keys(pickerDB)[0] || "";
 
-    // 초기 실행
     window.onload = () => {
         updateClassDropdown();
-        renderUI();
         updateAdminModalList();
+        renderUI();
     };
 
     function updateClassDropdown() {
         const select = document.getElementById('classSelect');
-        select.innerHTML = Object.keys(pickerDB).map(name => 
-            `<option value="${name}" ${name === currentClass ? 'selected' : ''}>${name}</option>`
-        ).join('');
+        const keys = Object.keys(pickerDB);
+        
+        if (keys.length === 0) {
+            select.innerHTML = '<option value="">-- 반을 추가해주세요 --</option>';
+            select.disabled = true;
+        } else {
+            select.disabled = false;
+            select.innerHTML = keys.map(name => 
+                `<option value="${name}" ${name === currentClass ? 'selected' : ''}>${name}</option>`
+            ).join('');
+        }
     }
 
     function renderUI() {
-        currentClass = document.getElementById('classSelect').value;
-        if (!currentClass) return;
+        currentClass = document.getElementById('classSelect').value || "";
+        const listBox = document.getElementById('studentListBox');
+        const display = document.getElementById('display-area');
+        const bulkInput = document.getElementById('bulkNameInput');
+        const saveBtn = document.getElementById('saveNamesBtn');
+        const pickBtn = document.getElementById('pickBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        if (!currentClass) {
+            document.getElementById('statText').innerText = `총 0명 / 남은 0명`;
+            listBox.innerHTML = '<div class="text-center text-muted mt-4">⚙️ 우측 상단의 관리 버튼을 눌러 반을 생성하세요.</div>';
+            display.innerText = "반 추가 필요";
+            document.getElementById('editingClassName').innerText = "(선택된 반 없음)";
+            bulkInput.value = "";
+            bulkInput.disabled = true;
+            saveBtn.disabled = true;
+            pickBtn.disabled = true;
+            resetBtn.disabled = true;
+            return;
+        }
 
         const data = pickerDB[currentClass];
-        const listBox = document.getElementById('studentListBox');
         const remainCount = data.total.length - data.picked.length;
         
         document.getElementById('statText').innerText = `총 ${data.total.length}명 / 남은 ${remainCount}명`;
         
-        listBox.innerHTML = data.total.map(name => {
-            const isPicked = data.picked.includes(name);
-            return `<span class="student-chip ${isPicked ? 'picked' : ''}">${name}</span>`;
-        }).join('');
+        if (data.total.length === 0) {
+            listBox.innerHTML = '<div class="text-center text-muted mt-4">명단이 비어있습니다. 관리 메뉴에서 명단을 넣어주세요.</div>';
+            display.innerText = "명단 입력 대기";
+            pickBtn.disabled = true;
+        } else {
+            listBox.innerHTML = data.total.map(name => {
+                const isPicked = data.picked.includes(name);
+                return `<span class="student-chip ${isPicked ? 'picked' : ''}">${name}</span>`;
+            }).join('');
+            display.innerText = "Ready!";
+            pickBtn.disabled = false;
+        }
 
-        document.getElementById('editingClassName').innerText = `(${currentClass})`;
-        document.getElementById('bulkNameInput').value = data.total.join(', ');
+        resetBtn.disabled = false;
+        document.getElementById('editingClassName').innerText = `[ ${currentClass} 편집 중 ]`;
+        bulkInput.disabled = false;
+        saveBtn.disabled = false;
+        bulkInput.value = data.total.join(' ');
     }
 
-    // 학급 관리 기능
     function addClass() {
         const name = document.getElementById('newClassName').value.trim();
-        if (name && !pickerDB[name]) {
-            pickerDB[name] = { total: [], picked: [] };
-            saveAndRefresh();
-            document.getElementById('newClassName').value = '';
-        }
+        if (!name) return alert("반 이름을 입력해주세요!");
+        if (pickerDB[name]) return alert("이미 존재하는 반 이름입니다.");
+        
+        pickerDB[name] = { total: [], picked: [] };
+        currentClass = name; // 새로 만든 반을 바로 선택
+        
+        document.getElementById('newClassName').value = '';
+        saveAndRefresh();
     }
 
     function deleteClass(name) {
-        if (confirm(`'${name}'을(를) 삭제하시겠습니까? 명단도 모두 사라집니다.`)) {
+        if (confirm(`정말 '${name}'을(를) 삭제하시겠습니까? 명단도 모두 날아갑니다.`)) {
             delete pickerDB[name];
-            currentClass = Object.keys(pickerDB)[0] || "";
+            currentClass = Object.keys(pickerDB)[0] || ""; // 삭제 후 첫 번째 반으로 이동하거나 비움
             saveAndRefresh();
         }
     }
 
     function saveBulkNames() {
-        if (!currentClass) return alert("반을 먼저 선택해주세요.");
+        if (!currentClass) return;
         const raw = document.getElementById('bulkNameInput').value;
         const names = raw.split(/[\s,]+/).filter(n => n.trim() !== "");
+        
         pickerDB[currentClass].total = names;
-        pickerDB[currentClass].picked = []; // 명단 갱신 시 뽑기 기록 초기화
+        pickerDB[currentClass].picked = [];
         saveAndRefresh();
-        alert("명단이 저장되었습니다.");
+        alert(`[${currentClass}] 명단 ${names.length}명이 저장되었습니다.`);
     }
 
     function resetCurrentClass() {
-        if (currentClass && confirm("발표 기록을 초기화하시겠습니까?")) {
+        if (currentClass && confirm("이미 발표한 아이들의 기록을 모두 지우고 다시 꽉 채울까요?")) {
             pickerDB[currentClass].picked = [];
             saveAndRefresh();
         }
     }
 
-    // 뽑기 로직
     function startRolling() {
         const data = pickerDB[currentClass];
         const isRemove = document.getElementById('removeOption').checked;
         const pool = isRemove ? data.total.filter(n => !data.picked.includes(n)) : data.total;
 
-        if (pool.length === 0) return alert("뽑을 학생이 없습니다!");
+        if (pool.length === 0) return alert("모든 학생이 발표했습니다! 명단을 초기화해주세요.");
 
         const display = document.getElementById('display-area');
         const btn = document.getElementById('pickBtn');
@@ -208,9 +245,8 @@
         }, 60);
     }
 
-    // 공통 유틸리티
     function saveAndRefresh() {
-        localStorage.setItem('mathPickerDB', JSON.stringify(pickerDB));
+        localStorage.setItem('mathPickerDB_v2', JSON.stringify(pickerDB));
         updateClassDropdown();
         updateAdminModalList();
         renderUI();
@@ -218,10 +254,17 @@
 
     function updateAdminModalList() {
         const listGroup = document.getElementById('classListGroup');
-        listGroup.innerHTML = Object.keys(pickerDB).map(name => `
+        const keys = Object.keys(pickerDB);
+        
+        if (keys.length === 0) {
+            listGroup.innerHTML = '<li class="list-group-item text-muted small">등록된 반이 없습니다.</li>';
+            return;
+        }
+
+        listGroup.innerHTML = keys.map(name => `
             <li class="list-group-item d-flex justify-content-between align-items-center">
-                ${name}
-                <button class="btn btn-sm btn-outline-danger border-0" onclick="deleteClass('${name}')">✕</button>
+                <strong>${name}</strong>
+                <button class="btn btn-sm btn-outline-danger border-0" onclick="deleteClass('${name}')">삭제</button>
             </li>
         `).join('');
     }
