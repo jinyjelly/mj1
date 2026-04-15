@@ -3,156 +3,229 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>중학교 수학 수업 - 발표자 뽑기</title>
+    <title>스마트 발표자 뽑기 - 수학 시간</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #f0f2f5; font-family: 'Pretendard', sans-serif; }
-        .container { max-width: 600px; margin-top: 50px; }
-        #display-area { 
-            height: 200px; display: flex; align-items: center; justify-content: center; 
-            font-size: 4rem; font-weight: bold; color: #0d6efd; 
-            background: white; border-radius: 20px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-bottom: 25px;
-            transition: all 0.2s;
+        :root { --primary-color: #4a90e2; --accent-color: #ff6b6b; }
+        body { background-color: #f4f7fa; font-family: 'Pretendard', sans-serif; color: #333; }
+        .main-container { max-width: 700px; margin: 40px auto; }
+        .glass-card { 
+            background: rgba(255, 255, 255, 0.95); border-radius: 24px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.05); padding: 30px; border: 1px solid #fff;
         }
-        .remaining-badge { font-size: 1rem; padding: 10px 15px; border-radius: 20px; }
-        .btn-lg { padding: 15px; font-weight: bold; }
+        #display-area { 
+            height: 220px; display: flex; align-items: center; justify-content: center; 
+            font-size: 5rem; font-weight: 900; color: var(--primary-color); 
+            background: #fff; border-radius: 20px; margin-bottom: 25px;
+            border: 3px solid #eef2f7; text-shadow: 2px 2px 4px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+        .student-list-container {
+            background: #fdfdfd; border-radius: 15px; padding: 15px;
+            border: 1px solid #edf2f7; min-height: 100px; max-height: 180px; overflow-y: auto;
+        }
+        .student-chip {
+            display: inline-block; padding: 4px 12px; margin: 4px;
+            background: #eef2f7; border-radius: 20px; font-size: 0.9rem; color: #666;
+        }
+        .student-chip.picked { background: #fee; color: #fcc; text-decoration: line-through; }
+        .btn-main { border-radius: 12px; padding: 12px 25px; font-weight: 700; transition: 0.3s; }
+        .btn-primary { background-color: var(--primary-color); border: none; }
+        .btn-primary:hover { background-color: #357abd; transform: translateY(-2px); }
+        .btn-config { border-radius: 12px; }
+        .badge-info { font-size: 0.8rem; font-weight: 400; color: #aaa; }
     </style>
 </head>
 <body>
 
-<div class="container text-center">
-    <h2 class="mb-4">📐 수학시간 발표자 뽑기</h2>
-    
-    <audio id="bgm" src="bgm.mp3" loop></audio>
-    <audio id="winSound" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"></audio>
-
-    <div class="row g-2 mb-4">
-        <div class="col-8">
-            <select id="classSelect" class="form-select form-select-lg" onchange="loadClassData()">
-                <option value="1">1학년 1반</option>
-                <option value="2">1학년 2반</option>
-                <option value="3">1학년 3반</option>
-            </select>
+<div class="container main-container">
+    <div class="glass-card text-center">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="fw-bold m-0">🎲 발표자 뽑기</h3>
+            <button class="btn btn-light btn-config" data-bs-toggle="modal" data-bs-target="#adminModal">⚙️ 관리</button>
         </div>
-        <div class="col-4">
-            <button class="btn btn-outline-secondary w-100 btn-lg" data-bs-toggle="modal" data-bs-target="#setupModal">명단 설정</button>
+
+        <div class="mb-4">
+            <select id="classSelect" class="form-select form-select-lg border-0 bg-light rounded-4" onchange="renderUI()">
+                </select>
         </div>
-    </div>
 
-    <div id="display-area">준비 완료!</div>
-    
-    <div class="mb-4">
-        <span class="badge bg-dark remaining-badge">남은 인원: <span id="count">0</span>명</span>
-    </div>
+        <div id="display-area">Ready!</div>
+        
+        <div class="mb-4">
+            <div class="d-flex justify-content-between align-items-end mb-2">
+                <span class="fw-bold text-secondary">학생 현황</span>
+                <span id="statText" class="badge-info">총 0명 / 남은 0명</span>
+            </div>
+            <div id="studentListBox" class="student-list-container text-start">
+                </div>
+        </div>
 
-    <div class="d-grid gap-3">
-        <button onclick="pick()" id="pickBtn" class="btn btn-primary btn-lg shadow">학생 뽑기</button>
-        <div class="btn-group shadow-sm">
-            <button onclick="resetCurrentClass()" class="btn btn-warning">초기화</button>
-            <input type="checkbox" class="btn-check" id="removeOption" checked>
-            <label class="btn btn-outline-danger" for="removeOption">한 번 뽑힌 학생 제외</label>
+        <div class="d-grid gap-3">
+            <button id="pickBtn" onclick="startRolling()" class="btn btn-primary btn-lg btn-main shadow-sm">뽑기 시작</button>
+            <div class="btn-group w-100 shadow-sm">
+                <button onclick="resetCurrentClass()" class="btn btn-outline-warning border-2 fw-bold">명단 초기화</button>
+                <input type="checkbox" class="btn-check" id="removeOption" checked>
+                <label class="btn btn-outline-danger border-2 fw-bold" for="removeOption">당첨자 제외</label>
+            </div>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="setupModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">반별 명단 입력</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body text-start">
-        <p class="small text-muted">학생 이름을 띄어쓰기나 쉼표로 구분해 넣어주세요. (예: 김철수, 이영희, 박지성)</p>
-        <textarea id="rawNames" class="form-control" rows="10"></textarea>
-      </div>
-      <div class="modal-footer">
-        <button onclick="saveNames()" class="btn btn-primary w-100" data-bs-dismiss="modal">저장 후 적용</button>
-      </div>
+<div class="modal fade" id="adminModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 rounded-4">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">학급 및 명단 관리</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row g-4">
+                    <div class="col-md-5">
+                        <label class="fw-bold mb-2">반 목록 관리</label>
+                        <div class="input-group mb-3">
+                            <input type="text" id="newClassName" class="form-control" placeholder="예: 1-1">
+                            <button class="btn btn-primary" onclick="addClass()">추가</button>
+                        </div>
+                        <ul id="classListGroup" class="list-group">
+                            </ul>
+                    </div>
+                    <div class="col-md-7">
+                        <label class="fw-bold mb-2">명단 일괄 입력 <span id="editingClassName" class="text-primary"></span></label>
+                        <textarea id="bulkNameInput" class="form-control" rows="10" 
+                            placeholder="학생 이름을 복사해서 붙여넣으세요.&#10;(공백, 쉼표, 줄바꿈으로 구분)"></textarea>
+                        <button class="btn btn-dark w-100 mt-3" onclick="saveBulkNames()">선택된 반에 명단 저장</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 
 <script>
-    // 데이터 구조: { "1": [이름들], "2": [이름들] ... }
-    let allData = JSON.parse(localStorage.getItem('mathClassData')) || { "1": [], "2": [], "3": [] };
-    let currentRemaining = [];
+    // 데이터 구조: { "반이름": { total: [], picked: [] } }
+    let pickerDB = JSON.parse(localStorage.getItem('mathPickerDB')) || { "1학년 1반": { total: [], picked: [] } };
+    let currentClass = Object.keys(pickerDB)[0];
 
-    function saveNames() {
-        const classNum = document.getElementById('classSelect').value;
-        const text = document.getElementById('rawNames').value;
-        const names = text.split(/[\s,]+/).filter(n => n.trim() !== "");
-        allData[classNum] = names;
-        localStorage.setItem('mathClassData', JSON.stringify(allData));
-        loadClassData();
+    // 초기 실행
+    window.onload = () => {
+        updateClassDropdown();
+        renderUI();
+        updateAdminModalList();
+    };
+
+    function updateClassDropdown() {
+        const select = document.getElementById('classSelect');
+        select.innerHTML = Object.keys(pickerDB).map(name => 
+            `<option value="${name}" ${name === currentClass ? 'selected' : ''}>${name}</option>`
+        ).join('');
     }
 
-    function loadClassData() {
-        const classNum = document.getElementById('classSelect').value;
-        currentRemaining = [...(allData[classNum] || [])];
-        document.getElementById('count').innerText = currentRemaining.length;
-        document.getElementById('display-area').innerText = "준비 완료!";
-        document.getElementById('rawNames').value = (allData[classNum] || []).join(", ");
+    function renderUI() {
+        currentClass = document.getElementById('classSelect').value;
+        if (!currentClass) return;
+
+        const data = pickerDB[currentClass];
+        const listBox = document.getElementById('studentListBox');
+        const remainCount = data.total.length - data.picked.length;
+        
+        document.getElementById('statText').innerText = `총 ${data.total.length}명 / 남은 ${remainCount}명`;
+        
+        listBox.innerHTML = data.total.map(name => {
+            const isPicked = data.picked.includes(name);
+            return `<span class="student-chip ${isPicked ? 'picked' : ''}">${name}</span>`;
+        }).join('');
+
+        document.getElementById('editingClassName').innerText = `(${currentClass})`;
+        document.getElementById('bulkNameInput').value = data.total.join(', ');
     }
 
-    function pick() {
-        if (currentRemaining.length === 0) {
-            alert("뽑을 학생이 없습니다! 명단을 확인해 주세요.");
-            return;
+    // 학급 관리 기능
+    function addClass() {
+        const name = document.getElementById('newClassName').value.trim();
+        if (name && !pickerDB[name]) {
+            pickerDB[name] = { total: [], picked: [] };
+            saveAndRefresh();
+            document.getElementById('newClassName').value = '';
         }
+    }
 
-        const display = document.getElementById('display-area');
-        const bgm = document.getElementById('bgm');
-        const winSound = document.getElementById('winSound');
-        const isRemove = document.getElementById('removeOption').checked;
-        const btn = document.getElementById('pickBtn');
+    function deleteClass(name) {
+        if (confirm(`'${name}'을(를) 삭제하시겠습니까? 명단도 모두 사라집니다.`)) {
+            delete pickerDB[name];
+            currentClass = Object.keys(pickerDB)[0] || "";
+            saveAndRefresh();
+        }
+    }
 
-        btn.disabled = true;
-        bgm.play().catch(() => {}); // 브라우저 정책상 첫 클릭시 재생 가능
-
-        let count = 0;
-        const timer = setInterval(() => {
-            const tempIdx = Math.floor(Math.random() * currentRemaining.length);
-            display.innerText = currentRemaining[tempIdx];
-            count++;
-
-            if (count > 15) { // 15번 셔플 후 정지
-                clearInterval(timer);
-                bgm.pause();
-                bgm.currentTime = 0; // 음악 초기화
-
-                const finalIdx = Math.floor(Math.random() * currentRemaining.length);
-                const picked = currentRemaining[finalIdx];
-                
-                display.innerText = picked;
-                display.style.transform = "scale(1.1)";
-                display.style.color = "#dc3545";
-                winSound.play();
-
-                if (isRemove) {
-                    currentRemaining.splice(finalIdx, 1);
-                    document.getElementById('count').innerText = currentRemaining.length;
-                }
-
-                setTimeout(() => {
-                    display.style.transform = "scale(1)";
-                    display.style.color = "#0d6efd";
-                    btn.disabled = false;
-                }, 1000);
-            }
-        }, 80);
+    function saveBulkNames() {
+        if (!currentClass) return alert("반을 먼저 선택해주세요.");
+        const raw = document.getElementById('bulkNameInput').value;
+        const names = raw.split(/[\s,]+/).filter(n => n.trim() !== "");
+        pickerDB[currentClass].total = names;
+        pickerDB[currentClass].picked = []; // 명단 갱신 시 뽑기 기록 초기화
+        saveAndRefresh();
+        alert("명단이 저장되었습니다.");
     }
 
     function resetCurrentClass() {
-        if(confirm("이 반의 진행 상황을 초기화하고 명단을 다시 불러올까요?")) {
-            loadClassData();
+        if (currentClass && confirm("발표 기록을 초기화하시겠습니까?")) {
+            pickerDB[currentClass].picked = [];
+            saveAndRefresh();
         }
     }
 
-    loadClassData();
-</script>
+    // 뽑기 로직
+    function startRolling() {
+        const data = pickerDB[currentClass];
+        const isRemove = document.getElementById('removeOption').checked;
+        const pool = isRemove ? data.total.filter(n => !data.picked.includes(n)) : data.total;
 
+        if (pool.length === 0) return alert("뽑을 학생이 없습니다!");
+
+        const display = document.getElementById('display-area');
+        const btn = document.getElementById('pickBtn');
+        btn.disabled = true;
+
+        let count = 0;
+        const timer = setInterval(() => {
+            display.innerText = pool[Math.floor(Math.random() * pool.length)];
+            count++;
+            if (count > 20) {
+                clearInterval(timer);
+                const final = pool[Math.floor(Math.random() * pool.length)];
+                display.innerText = final;
+                display.style.transform = "scale(1.2)";
+                setTimeout(() => { display.style.transform = "scale(1)"; }, 200);
+
+                if (isRemove) {
+                    data.picked.push(final);
+                    saveAndRefresh();
+                }
+                btn.disabled = false;
+            }
+        }, 60);
+    }
+
+    // 공통 유틸리티
+    function saveAndRefresh() {
+        localStorage.setItem('mathPickerDB', JSON.stringify(pickerDB));
+        updateClassDropdown();
+        updateAdminModalList();
+        renderUI();
+    }
+
+    function updateAdminModalList() {
+        const listGroup = document.getElementById('classListGroup');
+        listGroup.innerHTML = Object.keys(pickerDB).map(name => `
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                ${name}
+                <button class="btn btn-sm btn-outline-danger border-0" onclick="deleteClass('${name}')">✕</button>
+            </li>
+        `).join('');
+    }
+</script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
