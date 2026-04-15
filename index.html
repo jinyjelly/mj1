@@ -1,0 +1,529 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { Users, UserPlus, RefreshCw, Trash2, Settings2, UserCheck, Play, Info, Volume2, VolumeX } from 'lucide-react';
+
+// --- 웹 오디오 신디사이저 (효과음 생성기) ---
+const playTickSound = (ctx) => {
+  if (!ctx) return;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(800, ctx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(300, ctx.currentTime + 0.1);
+  gain.gain.setValueAtTime(0.1, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+  osc.start();
+  osc.stop(ctx.currentTime + 0.1);
+};
+
+const playTadaSound = (ctx) => {
+  if (!ctx) return;
+  // 도, 미, 솔, 높은도 (C 주요 화음)
+  const freqs = [523.25, 659.25, 783.99, 1046.50];
+  freqs.forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'triangle';
+    osc.frequency.value = freq;
+    
+    const startTime = ctx.currentTime + (i === 3 ? 0.15 : 0); // 마지막 높은 도는 살짝 엇박자로
+    gain.gain.setValueAtTime(0, startTime);
+    gain.gain.linearRampToValueAtTime(0.15, startTime + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.001, startTime + 1.5);
+    
+    osc.start(startTime);
+    osc.stop(startTime + 1.5);
+  });
+};
+
+export default function App() {
+  // 상태 관리
+  const [classes, setClasses] = useState([]);
+  const [selectedClassId, setSelectedClassId] = useState(null);
+  
+  // 입력 폼 상태
+  const [newClassName, setNewClassName] = useState('');
+  const [newStudentsText, setNewStudentsText] = useState('');
+  
+  // 뽑기 설정 및 결과 상태
+  const [excludePicked, setExcludePicked] = useState(true); // 한 번 뽑힌 학생 제외 여부 (기본값: true)
+  const [result, setResult] = useState(null);
+  const [isSpinning, setIsSpinning] = useState(false);
+  
+  // 소리 설정 상태 및 오디오 컨텍스트
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const audioCtxRef = useRef(null);
+
+  // 커스텀 모달 상태 (alert, confirm 대체)
+  const [modalConfig, setModalConfig] = useState({ isOpen: false, type: '', message: '', onConfirm: null });
+
+  const showAlert = (message) => setModalConfig({ isOpen: true, type: 'alert', message, onConfirm: null });
+  const showConfirm = (message, onConfirm) => setModalConfig({ isOpen: true, type: 'confirm', message, onConfirm });
+  const closeModal = () => setModalConfig({ isOpen: false, type: '', message: '', onConfirm: null });
+
+  // --- 화면 클릭 시 오디오 엔진 강제 기상 (브라우저 정책 대응) ---
+  useEffect(() => {
+    const unlockAudio = () => {
+      if (soundEnabled) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext && !audioCtxRef.current) {
+          audioCtxRef.current = new AudioContext();
+        }
+        if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
+          audioCtxRef.current.resume();
+        }
+      }
+      // 한 번 실행 후 이벤트 리스너 제거
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('touchstart', unlockAudio);
+    };
+
+    document.addEventListener('click', unlockAudio);
+    document.addEventListener('touchstart', unlockAudio);
+
+    return () => {
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('touchstart', unlockAudio);
+    };
+  }, [soundEnabled]);
+
+  // 로컬 스토리지에서 데이터 불러오기 (새로고침해도 유지되도록)
+  useEffect(() => {
+    const savedClasses = localStorage.getItem('classDrawData');
+    if (savedClasses) {
+      const parsed = JSON.parse(savedClasses);
+      setClasses(parsed);
+      if (parsed.length > 0) {
+        setSelectedClassId(parsed[0].id);
+      }
+    }
+  }, []);
+
+  // 데이터가 변경될 때마다 로컬 스토리지에 저장
+  useEffect(() => {
+    localStorage.setItem('classDrawData', JSON.stringify(classes));
+  }, [classes]);
+
+  // 반 추가 로직
+  const handleAddClass = (e) => {
+    e.preventDefault();
+    if (!newClassName.trim() || !newStudentsText.trim()) return;
+
+    // 쉼표나 줄바꿈으로 이름 분리
+    const names = newStudentsText.split(/[\n,]+/).map(name => name.trim()).filter(name => name.length > 0);
+    
+    // 중복 이름 처리 (홍길동1, 홍길동2 로 저장되진 않지만, 고유 ID로 구분)
+    const newStudents = names.map(name => ({
+      id: crypto.randomUUID(),
+      name: name,
+      picked: false
+    }));
+
+    const newClass = {
+      id: crypto.randomUUID(),
+      name: newClassName.trim(),
+      students: newStudents
+    };
+
+    setClasses([...classes, newClass]);
+    setNewClassName('');
+    setNewStudentsText('');
+    
+    // 첫 반을 추가한 경우 자동으로 선택
+    if (classes.length === 0) {
+      setSelectedClassId(newClass.id);
+    }
+  };
+
+  // 반 삭제 로직
+  const handleDeleteClass = (classId) => {
+    showConfirm('정말 이 반을 삭제하시겠습니까?', () => {
+      const updatedClasses = classes.filter(c => c.id !== classId);
+      setClasses(updatedClasses);
+      if (selectedClassId === classId) {
+        setSelectedClassId(updatedClasses.length > 0 ? updatedClasses[0].id : null);
+        setResult(null);
+      }
+    });
+  };
+
+  // 뽑기 로직
+  const handleDraw = async () => {
+    const currentClass = classes.find(c => c.id === selectedClassId);
+    if (!currentClass) return;
+
+    // 대상자 풀(Pool) 설정
+    let pool = currentClass.students;
+    if (excludePicked) {
+      pool = pool.filter(s => !s.picked);
+    }
+
+    if (pool.length === 0) {
+      showAlert('모든 학생이 뽑혔거나 뽑을 수 있는 학생이 없습니다!\n초기화하거나 중복 허용 모드를 사용해주세요.');
+      return;
+    }
+
+    // 뽑기 버튼 클릭 시 오디오 컨텍스트 초기화/활성화 (비동기 대기 필수)
+    if (soundEnabled) {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext && !audioCtxRef.current) {
+          audioCtxRef.current = new AudioContext();
+        }
+        if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
+          await audioCtxRef.current.resume();
+        }
+      } catch (err) {
+        console.error("오디오 엔진을 켜는데 실패했습니다.", err);
+      }
+    }
+
+    setIsSpinning(true);
+    setResult(null);
+
+    // 긴장감을 위한 두구두구 소리 재생
+    let tickCount = 0;
+    const tickInterval = setInterval(() => {
+      if (soundEnabled && audioCtxRef.current) playTickSound(audioCtxRef.current);
+      tickCount++;
+      if (tickCount >= 5) clearInterval(tickInterval); // 600ms 전에 멈추도록
+    }, 100);
+
+    // 긴장감을 위한 약간의 딜레이 후 결과 발표
+    setTimeout(() => {
+      const randomIndex = Math.floor(Math.random() * pool.length);
+      const winner = pool[randomIndex];
+      
+      setResult(winner);
+
+      // 결과 발표 짜잔! 소리
+      if (soundEnabled && audioCtxRef.current) {
+        playTadaSound(audioCtxRef.current);
+      }
+
+      // 뽑힌 학생 상태 업데이트 (excludePicked가 true일 때만 상태를 변경하거나, 시각적 표시를 위해 항상 변경)
+      setClasses(classes.map(c => {
+        if (c.id === selectedClassId) {
+          return {
+            ...c,
+            students: c.students.map(s => 
+              s.id === winner.id ? { ...s, picked: true } : s
+            )
+          };
+        }
+        return c;
+      }));
+
+      setIsSpinning(false);
+    }, 600);
+  };
+
+  // 초기화 로직 (뽑힌 상태 리셋)
+  const handleReset = () => {
+    showConfirm('현재 반의 뽑기 기록을 모두 초기화하시겠습니까?', () => {
+      setClasses(classes.map(c => {
+        if (c.id === selectedClassId) {
+          return {
+            ...c,
+            students: c.students.map(s => ({ ...s, picked: false }))
+          };
+        }
+        return c;
+      }));
+      setResult(null);
+    });
+  };
+
+  // 현재 선택된 반 정보
+  const activeClass = classes.find(c => c.id === selectedClassId);
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-800 p-4 md:p-8 font-sans">
+      <div className="max-w-6xl mx-auto space-y-6">
+        
+        {/* 헤더 */}
+        <header className="flex items-center justify-between bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+          <div className="flex items-center space-x-3">
+            <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600">
+              <Users size={28} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-slate-800">발표자 랜덤 뽑기</h1>
+              <p className="text-sm text-slate-500">공정하고 재미있는 우리 반 발표자 선정!</p>
+            </div>
+          </div>
+          {/* 소리 설정 토글 버튼 */}
+          <button 
+            onClick={() => setSoundEnabled(!soundEnabled)}
+            className={`p-3 rounded-xl flex items-center justify-center transition-colors ${
+              soundEnabled ? 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
+            }`}
+            title={soundEnabled ? "소리 끄기" : "소리 켜기"}
+          >
+            {soundEnabled ? <Volume2 size={24} /> : <VolumeX size={24} />}
+          </button>
+        </header>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          {/* 왼쪽: 반 및 학생 관리 사이드바 */}
+          <div className="lg:col-span-1 space-y-6">
+            
+            {/* 반 추가 폼 */}
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+              <h2 className="text-lg font-semibold flex items-center space-x-2 mb-4">
+                <UserPlus size={20} className="text-indigo-500"/>
+                <span>새로운 반 추가</span>
+              </h2>
+              <form onSubmit={handleAddClass} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-600 mb-1">반 이름</label>
+                  <input
+                    type="text"
+                    value={newClassName}
+                    onChange={(e) => setNewClassName(e.target.value)}
+                    placeholder="예: 3학년 2반"
+                    className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-600 mb-1 flex justify-between">
+                    <span>학생 명단</span>
+                    <span className="text-xs text-slate-400">쉼표(,)나 줄바꿈으로 구분</span>
+                  </label>
+                  <textarea
+                    value={newStudentsText}
+                    onChange={(e) => setNewStudentsText(e.target.value)}
+                    placeholder="홍길동, 김철수, 이영희&#13;&#10;또는 엔터로 구분"
+                    rows={4}
+                    className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={!newClassName.trim() || !newStudentsText.trim()}
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                >
+                  <UserPlus size={18} />
+                  <span>반 등록하기</span>
+                </button>
+              </form>
+            </div>
+
+            {/* 등록된 반 목록 */}
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+              <h2 className="text-lg font-semibold mb-4 text-slate-800">등록된 반 목록</h2>
+              {classes.length === 0 ? (
+                <div className="text-center py-6 text-slate-400 text-sm bg-slate-50 rounded-lg">
+                  등록된 반이 없습니다.<br/>위에서 먼저 반을 추가해주세요.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {classes.map(c => (
+                    <div 
+                      key={c.id}
+                      className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all ${
+                        selectedClassId === c.id 
+                          ? 'bg-indigo-50 border border-indigo-200' 
+                          : 'bg-white border border-slate-100 hover:bg-slate-50'
+                      }`}
+                      onClick={() => { setSelectedClassId(c.id); setResult(null); }}
+                    >
+                      <div className="flex flex-col">
+                        <span className={`font-medium ${selectedClassId === c.id ? 'text-indigo-700' : 'text-slate-700'}`}>
+                          {c.name}
+                        </span>
+                        <span className="text-xs text-slate-500">{c.students.length}명</span>
+                      </div>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleDeleteClass(c.id); }}
+                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        title="삭제"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+          </div>
+
+          {/* 오른쪽: 메인 뽑기 화면 */}
+          <div className="lg:col-span-2 space-y-6">
+            {activeClass ? (
+              <>
+                {/* 뽑기 컨트롤 및 결과 */}
+                <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center justify-center min-h-[400px] relative overflow-hidden">
+                  
+                  {/* 설정 바 */}
+                  <div className="absolute top-0 left-0 w-full p-4 flex justify-between items-center bg-slate-50 border-b border-slate-100">
+                    <div className="flex items-center space-x-3">
+                      <h2 className="font-bold text-lg text-slate-800">{activeClass.name}</h2>
+                      <span className="bg-indigo-100 text-indigo-700 text-xs px-2 py-1 rounded-full font-medium">
+                        총 {activeClass.students.length}명
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center space-x-4">
+                      {/* 조건 설정 토글 */}
+                      <label className="flex items-center cursor-pointer space-x-2 group" title="켜두면 한 번 뽑힌 학생은 다음 뽑기에서 제외됩니다.">
+                        <div className="relative">
+                          <input 
+                            type="checkbox" 
+                            className="sr-only" 
+                            checked={excludePicked}
+                            onChange={() => setExcludePicked(!excludePicked)}
+                          />
+                          <div className={`block w-10 h-6 rounded-full transition-colors ${excludePicked ? 'bg-indigo-500' : 'bg-slate-300'}`}></div>
+                          <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${excludePicked ? 'transform translate-x-4' : ''}`}></div>
+                        </div>
+                        <span className="text-sm font-medium text-slate-600 select-none group-hover:text-slate-800">
+                          {excludePicked ? '중복 제외 켜짐' : '중복 뽑기 허용'}
+                        </span>
+                      </label>
+                      
+                      {/* 초기화 버튼 */}
+                      <button 
+                        onClick={handleReset}
+                        className="flex items-center space-x-1 text-sm text-slate-500 hover:text-indigo-600 transition-colors px-2 py-1 rounded hover:bg-indigo-50"
+                      >
+                        <RefreshCw size={14} />
+                        <span>기록 초기화</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 결과 표시 영역 */}
+                  <div className="mt-16 mb-8 text-center w-full">
+                    {isSpinning ? (
+                      <div className="animate-pulse flex flex-col items-center">
+                        <div className="w-24 h-24 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
+                        <p className="text-xl font-bold text-slate-400">두구두구두구...</p>
+                      </div>
+                    ) : result ? (
+                      <div className="animate-in zoom-in duration-300">
+                        <p className="text-slate-500 mb-2 text-lg">오늘의 주인공은</p>
+                        <div className="text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-4 py-2">
+                          {result.name}
+                        </div>
+                        <p className="text-slate-400 text-sm">축하합니다! 발표를 준비해주세요.</p>
+                      </div>
+                    ) : (
+                      <div className="text-center py-12">
+                        <div className="bg-slate-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-dashed border-slate-200">
+                          <UserCheck size={32} className="text-slate-300" />
+                        </div>
+                        <p className="text-slate-400">아래의 뽑기 버튼을 눌러주세요!</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 뽑기 버튼 */}
+                  <button
+                    onClick={handleDraw}
+                    disabled={isSpinning || activeClass.students.length === 0}
+                    className={`
+                      relative group overflow-hidden w-64 py-4 rounded-2xl font-bold text-xl shadow-lg transition-all duration-200
+                      ${isSpinning 
+                        ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none' 
+                        : 'bg-indigo-600 hover:bg-indigo-500 text-white hover:shadow-indigo-500/30 hover:-translate-y-1'
+                      }
+                    `}
+                  >
+                    <span className="relative z-10 flex items-center justify-center space-x-2">
+                      <Play size={24} fill="currentColor" className={isSpinning ? 'opacity-0' : 'opacity-100'}/>
+                      <span>{isSpinning ? '뽑는 중...' : '발표자 뽑기'}</span>
+                    </span>
+                    {/* 버튼 배경 애니메이션 효과 */}
+                    {!isSpinning && (
+                      <div className="absolute inset-0 h-full w-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
+                    )}
+                  </button>
+
+                </div>
+
+                {/* 학생 목록 현황 (시각적 피드백) */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                  <h3 className="text-sm font-bold text-slate-700 mb-4 flex items-center">
+                    <Info size={16} className="mr-2 text-indigo-500" />
+                    학생 목록 현황
+                    {excludePicked && (
+                      <span className="ml-2 font-normal text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
+                        어둡게 표시된 학생은 이번 뽑기에서 제외됩니다.
+                      </span>
+                    )}
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {activeClass.students.map(student => (
+                      <div 
+                        key={student.id}
+                        className={`
+                          px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-300
+                          ${student.picked 
+                            ? 'bg-slate-100 text-slate-400 line-through decoration-slate-300' 
+                            : 'bg-indigo-50 text-indigo-700 border border-indigo-100 shadow-sm'
+                          }
+                          ${result?.id === student.id ? 'ring-2 ring-indigo-400 scale-110 shadow-md' : ''}
+                        `}
+                      >
+                        {student.name}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            ) : (
+              // 반이 선택되지 않았을 때의 빈 화면
+            <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center justify-center h-full min-h-[500px]">
+              <div className="bg-indigo-50 p-6 rounded-full mb-6">
+                <Users size={48} className="text-indigo-300" />
+              </div>
+              <h2 className="text-xl font-bold text-slate-700 mb-2">선택된 반이 없습니다</h2>
+              <p className="text-slate-500 text-center max-w-sm">
+                왼쪽에서 새로운 반을 등록하거나<br/>이미 등록된 반을 선택하여 뽑기를 시작해보세요!
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 커스텀 모달 UI (alert, confirm 대체) */}
+      {modalConfig.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 animate-in zoom-in-95 duration-200">
+            <h3 className="text-lg font-bold text-slate-800 mb-2">
+              {modalConfig.type === 'alert' ? '알림' : '확인'}
+            </h3>
+            <p className="text-slate-600 mb-6 whitespace-pre-line">{modalConfig.message}</p>
+            <div className="flex justify-end space-x-3">
+              {modalConfig.type === 'confirm' && (
+                <button 
+                  onClick={closeModal}
+                  className="px-4 py-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors font-medium"
+                >
+                  취소
+                </button>
+              )}
+              <button 
+                onClick={() => {
+                  if (modalConfig.onConfirm) modalConfig.onConfirm();
+                  closeModal();
+                }}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors font-medium"
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  </div>
+  );
+}
