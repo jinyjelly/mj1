@@ -8,29 +8,81 @@
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-        :root { --primary-color: #4a90e2; --accent-color: #ff6b6b; }
-        body { background-color: #f4f7fa; font-family: 'Pretendard', sans-serif; color: #333; }
-        .main-container { max-width: 700px; margin: 40px auto; }
-        .glass-card { 
-            background: rgba(255, 255, 255, 0.95); border-radius: 24px; 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.05); padding: 30px; border: 1px solid #fff;
+        :root { 
+            --primary-color: #ff8b94; /* 화사한 코랄 핑크 */
+            --accent-color: #a8e6cf;  /* 파스텔 민트 */
+            --text-color: #5c4b51;    /* 부드러운 다크브라운 (검은색 대비 눈이 편안함) */
         }
+        body { 
+            /* 봄기운 낭낭한 복숭아~하늘색 파스텔 그라데이션 */
+            background: linear-gradient(135deg, #fff1eb 0%, #ace0f9 100%); 
+            font-family: 'Pretendard', sans-serif; 
+            color: var(--text-color);
+            min-height: 100vh;
+        }
+        .main-container { max-width: 700px; margin: 40px auto; padding-bottom: 40px; }
+        
+        /* 반투명 유리 질감 카드 */
+        .glass-card { 
+            background: rgba(255, 255, 255, 0.85); 
+            backdrop-filter: blur(12px);
+            border-radius: 28px; 
+            box-shadow: 0 15px 35px rgba(255, 139, 148, 0.2); 
+            padding: 35px; 
+            border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+        
         #display-area { 
             height: 220px; display: flex; align-items: center; justify-content: center; 
             font-size: 4.5rem; font-weight: 900; color: var(--primary-color); 
-            background: #fff; border-radius: 20px; margin-bottom: 25px;
-            border: 3px solid #eef2f7; text-shadow: 2px 2px 4px rgba(0,0,0,0.05);
+            background: #fff; border-radius: 24px; margin-bottom: 25px;
+            border: 3px dashed #ffc6c9; /* 귀여운 핑크 점선 테두리 */
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.02);
+            transition: all 0.2s ease-in-out;
         }
+        
         .student-list-container {
-            background: #fdfdfd; border-radius: 15px; padding: 15px;
-            border: 1px solid #edf2f7; min-height: 120px; max-height: 180px; overflow-y: auto;
+            background: rgba(255, 255, 255, 0.6); 
+            border-radius: 18px; padding: 15px;
+            border: 1px solid #fce3e4; min-height: 120px; max-height: 180px; overflow-y: auto;
         }
+        
         .student-chip {
-            display: inline-block; padding: 4px 12px; margin: 4px;
-            background: #eef2f7; border-radius: 20px; font-size: 0.9rem; color: #666;
+            display: inline-block; padding: 6px 14px; margin: 4px;
+            background: #fff; border-radius: 20px; font-size: 0.95rem; color: #7a6b71;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+            border: 1px solid #f5ecee;
+            transition: all 0.3s;
         }
-        .student-chip.picked { background: #fee; color: #fcc; text-decoration: line-through; }
-        .btn-main { border-radius: 12px; padding: 12px 25px; font-weight: 700; transition: 0.3s; }
+        .student-chip.picked { 
+            background: #f7f1f2; color: #d1b8c0; 
+            text-decoration: line-through; box-shadow: none; border: none;
+        }
+        
+        /* 버튼 색상 커스텀 */
+        .btn-main { 
+            border-radius: 16px; padding: 15px 25px; font-weight: 800; font-size: 1.2rem;
+            background-color: var(--primary-color); border: none; color: white;
+            box-shadow: 0 6px 15px rgba(255, 139, 148, 0.3);
+            transition: 0.3s;
+        }
+        .btn-main:hover:not(:disabled) { 
+            background-color: #ff7480; transform: translateY(-3px); 
+            box-shadow: 0 8px 20px rgba(255, 139, 148, 0.4);
+        }
+        .btn-main:disabled { background-color: #fcaeb3; }
+        
+        .btn-outline-custom {
+            color: #b28b97; border-color: #e6d3d8; font-weight: 700;
+        }
+        .btn-outline-custom:hover { background-color: #f7eef0; color: #8e6875; }
+        
+        .btn-check:checked + .btn-outline-custom {
+            background-color: #ff8b94; color: white; border-color: #ff8b94;
+        }
+        
+        /* 설정 버튼 둥글게 */
+        .btn-config { border-radius: 12px; font-weight: bold; color: #5c4b51; background: #fff; }
     </style>
 </head>
 <body>
@@ -38,32 +90,32 @@
 <div class="container main-container">
     <div class="glass-card text-center">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="fw-bold m-0">🎲 발표자 뽑기</h3>
-            <button class="btn btn-light border shadow-sm" data-bs-toggle="modal" data-bs-target="#adminModal">⚙️ 학급 관리</button>
+            <h3 class="fw-bold m-0" style="color: #5c4b51;">🌸 발표자 뽑기</h3>
+            <button class="btn btn-light btn-config shadow-sm border-0" data-bs-toggle="modal" data-bs-target="#adminModal">⚙️ 학급 관리</button>
         </div>
 
         <div class="mb-4">
-            <select id="classSelect" class="form-select form-select-lg border-0 bg-light rounded-4 fw-bold text-center" onchange="renderUI()">
+            <select id="classSelect" class="form-select form-select-lg border-0 rounded-4 fw-bold text-center shadow-sm" style="background-color: #fff; color: var(--text-color);" onchange="renderUI(true)">
             </select>
         </div>
 
         <div id="display-area">반 추가 필요</div>
         
         <div class="mb-4">
-            <div class="d-flex justify-content-between align-items-end mb-2">
-                <span class="fw-bold text-secondary">학생 현황</span>
-                <span id="statText" class="badge text-bg-light">총 0명 / 남은 0명</span>
+            <div class="d-flex justify-content-between align-items-end mb-2 px-2">
+                <span class="fw-bold" style="color: #8c7b81;">학생 현황</span>
+                <span id="statText" class="badge rounded-pill" style="background-color: #ffccd0; color: #d65a62; font-size: 0.85rem;">총 0명 / 남은 0명</span>
             </div>
-            <div id="studentListBox" class="student-list-container text-start">
+            <div id="studentListBox" class="student-list-container text-start shadow-sm">
             </div>
         </div>
 
         <div class="d-grid gap-3">
-            <button id="pickBtn" onclick="startRolling()" class="btn btn-primary btn-lg btn-main shadow-sm" disabled>뽑기 시작</button>
-            <div class="btn-group w-100 shadow-sm">
-                <button onclick="resetCurrentClass()" class="btn btn-outline-warning border-2 fw-bold" id="resetBtn" disabled>명단 초기화</button>
+            <button id="pickBtn" onclick="startRolling()" class="btn btn-main" disabled>두구두구 뽑기 시작!</button>
+            <div class="btn-group w-100 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+                <button onclick="resetCurrentClass()" class="btn btn-outline-custom" style="background: #fff;" id="resetBtn" disabled>명단 초기화</button>
                 <input type="checkbox" class="btn-check" id="removeOption" checked>
-                <label class="btn btn-outline-danger border-2 fw-bold" for="removeOption">당첨자 제외</label>
+                <label class="btn btn-outline-custom" style="background: #fff;" for="removeOption">당첨자 제외</label>
             </div>
         </div>
     </div>
@@ -71,10 +123,10 @@
 
 <div class="modal fade" id="winnerModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content shadow-lg border-0 rounded-4" style="background: linear-gradient(135deg, #4a90e2, #6a11cb);">
-            <div class="modal-body p-5 text-center text-white">
-                <h4 class="mb-3 opacity-75">🎉 오늘의 발표자 🎉</h4>
-                <h1 class="display-1 fw-bold mb-0 text-shadow" id="winnerName">학생이름</h1>
+        <div class="modal-content shadow-lg border-0 rounded-4" style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);">
+            <div class="modal-body p-5 text-center" style="color: #fff;">
+                <h4 class="mb-3" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.1);">🎉 오늘의 발표자 🎉</h4>
+                <h1 class="display-1 fw-bold mb-0" style="text-shadow: 2px 2px 5px rgba(0,0,0,0.15);" id="winnerName">학생이름</h1>
             </div>
         </div>
     </div>
@@ -82,25 +134,25 @@
 
 <div class="modal fade" id="adminModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content border-0 rounded-4">
+        <div class="modal-content border-0 rounded-4" style="background: #fffafb;">
             <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold">학급 및 명단 관리</h5>
+                <h5 class="modal-title fw-bold" style="color: var(--text-color);">학급 및 명단 관리</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
                 <div class="row g-4">
                     <div class="col-md-5">
-                        <label class="fw-bold mb-2 text-primary">1. 반 만들기</label>
-                        <div class="input-group mb-3">
-                            <input type="text" id="newClassName" class="form-control" placeholder="예: 3반">
-                            <button class="btn btn-primary" onclick="addClass()">추가</button>
+                        <label class="fw-bold mb-2" style="color: var(--primary-color);">1. 반 만들기</label>
+                        <div class="input-group mb-3 shadow-sm rounded-3">
+                            <input type="text" id="newClassName" class="form-control border-0" placeholder="예: 3반">
+                            <button class="btn text-white" style="background-color: var(--primary-color);" onclick="addClass()">추가</button>
                         </div>
-                        <ul id="classListGroup" class="list-group shadow-sm"></ul>
+                        <ul id="classListGroup" class="list-group shadow-sm border-0 rounded-3"></ul>
                     </div>
                     <div class="col-md-7">
-                        <label class="fw-bold mb-2 text-primary">2. 명단 넣기 <span id="editingClassName" class="text-danger small"></span></label>
-                        <textarea id="bulkNameInput" class="form-control" rows="8" placeholder="반을 먼저 추가하고 선택한 뒤, 여기에 명단을 붙여넣으세요." disabled></textarea>
-                        <button class="btn btn-dark w-100 mt-3 fw-bold" onclick="saveBulkNames()" id="saveNamesBtn" disabled>명단 저장하기</button>
+                        <label class="fw-bold mb-2" style="color: var(--primary-color);">2. 명단 넣기 <span id="editingClassName" style="color: #b28b97; font-size: 0.85rem;"></span></label>
+                        <textarea id="bulkNameInput" class="form-control border-0 shadow-sm rounded-3" rows="8" placeholder="반을 먼저 추가하고 선택한 뒤, 여기에 명단을 붙여넣으세요." disabled></textarea>
+                        <button class="btn w-100 mt-3 fw-bold text-white shadow-sm" style="background-color: #a1c4fd; border-radius: 12px;" onclick="saveBulkNames()" id="saveNamesBtn" disabled>명단 저장하기</button>
                     </div>
                 </div>
             </div>
@@ -115,7 +167,7 @@
     window.onload = () => {
         updateClassDropdown();
         updateAdminModalList();
-        renderUI();
+        renderUI(true);
     };
 
     function updateClassDropdown() {
@@ -133,7 +185,7 @@
         }
     }
 
-    function renderUI() {
+    function renderUI(resetDisplay = false) {
         currentClass = document.getElementById('classSelect').value || "";
         const listBox = document.getElementById('studentListBox');
         const display = document.getElementById('display-area');
@@ -144,8 +196,8 @@
 
         if (!currentClass) {
             document.getElementById('statText').innerText = `총 0명 / 남은 0명`;
-            listBox.innerHTML = '<div class="text-center text-muted mt-4">⚙️ 우측 상단의 관리 버튼을 눌러 반을 생성하세요.</div>';
-            display.innerText = "반 추가 필요";
+            listBox.innerHTML = '<div class="text-center text-muted mt-4" style="font-size: 0.9rem;">⚙️ 우측 상단의 관리 버튼을 눌러 반을 생성하세요.</div>';
+            if (resetDisplay) display.innerText = "반 추가 필요";
             document.getElementById('editingClassName').innerText = "(선택된 반 없음)";
             bulkInput.value = ""; bulkInput.disabled = true;
             saveBtn.disabled = true; pickBtn.disabled = true; resetBtn.disabled = true;
@@ -158,15 +210,15 @@
         document.getElementById('statText').innerText = `총 ${data.total.length}명 / 남은 ${remainCount}명`;
         
         if (data.total.length === 0) {
-            listBox.innerHTML = '<div class="text-center text-muted mt-4">명단이 비어있습니다. 관리 메뉴에서 명단을 넣어주세요.</div>';
-            display.innerText = "명단 입력 대기";
+            listBox.innerHTML = '<div class="text-center text-muted mt-4" style="font-size: 0.9rem;">명단이 비어있습니다. 관리 메뉴에서 명단을 넣어주세요.</div>';
+            if (resetDisplay) display.innerText = "명단 입력 대기";
             pickBtn.disabled = true;
         } else {
             listBox.innerHTML = data.total.map(name => {
                 const isPicked = data.picked.includes(name);
                 return `<span class="student-chip ${isPicked ? 'picked' : ''}">${name}</span>`;
             }).join('');
-            display.innerText = "Ready!";
+            if (resetDisplay) display.innerText = "Ready!";
             pickBtn.disabled = false;
         }
 
@@ -184,14 +236,14 @@
         pickerDB[name] = { total: [], picked: [] };
         currentClass = name;
         document.getElementById('newClassName').value = '';
-        saveAndRefresh();
+        saveAndRefresh(true);
     }
 
     function deleteClass(name) {
         if (confirm(`정말 '${name}'을(를) 삭제하시겠습니까?`)) {
             delete pickerDB[name];
             currentClass = Object.keys(pickerDB)[0] || "";
-            saveAndRefresh();
+            saveAndRefresh(true);
         }
     }
 
@@ -202,14 +254,14 @@
         
         pickerDB[currentClass].total = names;
         pickerDB[currentClass].picked = [];
-        saveAndRefresh();
-        alert(`[${currentClass}] 명단이 저장되었습니다.`);
+        saveAndRefresh(true);
+        alert(`[${currentClass}] 명단이 예쁘게 저장되었습니다! 🌸`);
     }
 
     function resetCurrentClass() {
-        if (currentClass && confirm("이미 발표한 아이들의 기록을 모두 지우고 다시 꽉 채울까요?")) {
+        if (currentClass && confirm("이미 발표한 아이들의 기록을 지우고 다시 가득 채울까요?")) {
             pickerDB[currentClass].picked = [];
-            saveAndRefresh();
+            saveAndRefresh(true);
         }
     }
 
@@ -226,45 +278,41 @@
 
         let count = 0;
         const timer = setInterval(() => {
-            // 돌아가는 중에는 화면 가운데 글씨만 바뀝니다.
             display.innerText = pool[Math.floor(Math.random() * pool.length)];
             count++;
             
             if (count > 25) {
                 clearInterval(timer);
                 
-                // 최종 당첨자 결정!
                 const final = pool[Math.floor(Math.random() * pool.length)];
-                display.innerText = final;
+                display.innerText = final; 
 
-                // 중복 제외 처리
                 if (isRemove) {
                     data.picked.push(final);
-                    saveAndRefresh();
+                    saveAndRefresh(false); 
                 }
                 btn.disabled = false;
 
-                // 🌟 추가된 기능: 팝업 띄우기 및 폭죽 효과 🌟
-                document.getElementById('winnerName').innerText = final; // 팝업창 이름 변경
+                document.getElementById('winnerName').innerText = final;
                 const winnerModal = new bootstrap.Modal(document.getElementById('winnerModal'));
-                winnerModal.show(); // 팝업창 띄우기
+                winnerModal.show();
 
-                // 폭죽 팡팡!
+                // 종이꽃가루도 파스텔톤으로 변경!
                 confetti({
                     particleCount: 150,
                     spread: 80,
                     origin: { y: 0.6 },
-                    colors: ['#26ccff', '#a25afd', '#ff5e7e', '#88ff5a', '#fcff42']
+                    colors: ['#ffb7b2', '#e2f0cb', '#b5ead7', '#c7ceea', '#ffdac1']
                 });
             }
         }, 50);
     }
 
-    function saveAndRefresh() {
+    function saveAndRefresh(resetDisplay = false) {
         localStorage.setItem('mathPickerDB_v3', JSON.stringify(pickerDB));
         updateClassDropdown();
         updateAdminModalList();
-        renderUI();
+        renderUI(resetDisplay);
     }
 
     function updateAdminModalList() {
@@ -272,14 +320,14 @@
         const keys = Object.keys(pickerDB);
         
         if (keys.length === 0) {
-            listGroup.innerHTML = '<li class="list-group-item text-muted small">등록된 반이 없습니다.</li>';
+            listGroup.innerHTML = '<li class="list-group-item border-0 text-muted small">등록된 반이 없습니다.</li>';
             return;
         }
 
         listGroup.innerHTML = keys.map(name => `
-            <li class="list-group-item d-flex justify-content-between align-items-center">
+            <li class="list-group-item border-0 border-bottom d-flex justify-content-between align-items-center" style="background: transparent;">
                 <strong>${name}</strong>
-                <button class="btn btn-sm btn-outline-danger border-0" onclick="deleteClass('${name}')">삭제</button>
+                <button class="btn btn-sm text-danger border-0" style="background: #ffeeef; font-weight: bold;" onclick="deleteClass('${name}')">삭제</button>
             </li>
         `).join('');
     }
