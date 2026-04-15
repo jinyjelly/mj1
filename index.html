@@ -9,12 +9,11 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         :root { 
-            --primary-color: #ff8b94; /* 화사한 코랄 핑크 */
-            --accent-color: #a8e6cf;  /* 파스텔 민트 */
-            --text-color: #5c4b51;    /* 부드러운 다크브라운 (검은색 대비 눈이 편안함) */
+            --primary-color: #ff8b94; 
+            --accent-color: #a8e6cf;  
+            --text-color: #5c4b51;    
         }
         body { 
-            /* 봄기운 낭낭한 복숭아~하늘색 파스텔 그라데이션 */
             background: linear-gradient(135deg, #fff1eb 0%, #ace0f9 100%); 
             font-family: 'Pretendard', sans-serif; 
             color: var(--text-color);
@@ -22,7 +21,6 @@
         }
         .main-container { max-width: 700px; margin: 40px auto; padding-bottom: 40px; }
         
-        /* 반투명 유리 질감 카드 */
         .glass-card { 
             background: rgba(255, 255, 255, 0.85); 
             backdrop-filter: blur(12px);
@@ -36,9 +34,12 @@
             height: 220px; display: flex; align-items: center; justify-content: center; 
             font-size: 4.5rem; font-weight: 900; color: var(--primary-color); 
             background: #fff; border-radius: 24px; margin-bottom: 25px;
-            border: 3px dashed #ffc6c9; /* 귀여운 핑크 점선 테두리 */
+            border: 3px dashed #ffc6c9; 
             text-shadow: 2px 2px 4px rgba(0,0,0,0.02);
             transition: all 0.2s ease-in-out;
+            padding: 0 20px;
+            text-align: center;
+            word-break: keep-all; /* 단어 단위로 줄바꿈 */
         }
         
         .student-list-container {
@@ -59,7 +60,6 @@
             text-decoration: line-through; box-shadow: none; border: none;
         }
         
-        /* 버튼 색상 커스텀 */
         .btn-main { 
             border-radius: 16px; padding: 15px 25px; font-weight: 800; font-size: 1.2rem;
             background-color: var(--primary-color); border: none; color: white;
@@ -72,16 +72,9 @@
         }
         .btn-main:disabled { background-color: #fcaeb3; }
         
-        .btn-outline-custom {
-            color: #b28b97; border-color: #e6d3d8; font-weight: 700;
-        }
+        .btn-outline-custom { color: #b28b97; border-color: #e6d3d8; font-weight: 700; }
         .btn-outline-custom:hover { background-color: #f7eef0; color: #8e6875; }
-        
-        .btn-check:checked + .btn-outline-custom {
-            background-color: #ff8b94; color: white; border-color: #ff8b94;
-        }
-        
-        /* 설정 버튼 둥글게 */
+        .btn-check:checked + .btn-outline-custom { background-color: #ff8b94; color: white; border-color: #ff8b94; }
         .btn-config { border-radius: 12px; font-weight: bold; color: #5c4b51; background: #fff; }
     </style>
 </head>
@@ -110,6 +103,12 @@
             </div>
         </div>
 
+        <div class="d-flex justify-content-center align-items-center gap-2 mb-3">
+            <label for="pickCount" class="fw-bold" style="color: var(--text-color);">추출 인원:</label>
+            <input type="number" id="pickCount" class="form-control text-center shadow-sm fw-bold" value="1" min="1" max="30" style="width: 80px; border-radius: 12px; border: 1px solid #fce3e4; color: var(--primary-color);">
+            <span class="fw-bold" style="color: var(--text-color);">명</span>
+        </div>
+
         <div class="d-grid gap-3">
             <button id="pickBtn" onclick="startRolling()" class="btn btn-main" disabled>두구두구 뽑기 시작!</button>
             <div class="btn-group w-100 shadow-sm" style="border-radius: 12px; overflow: hidden;">
@@ -122,11 +121,10 @@
 </div>
 
 <div class="modal fade" id="winnerModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content shadow-lg border-0 rounded-4" style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);">
+    <div class="modal-dialog modal-dialog-centered modal-lg"> <div class="modal-content shadow-lg border-0 rounded-4" style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);">
             <div class="modal-body p-5 text-center" style="color: #fff;">
                 <h4 class="mb-3" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.1);">🎉 오늘의 발표자 🎉</h4>
-                <h1 class="display-1 fw-bold mb-0" style="text-shadow: 2px 2px 5px rgba(0,0,0,0.15);" id="winnerName">학생이름</h1>
+                <h1 class="display-1 fw-bold mb-0" style="text-shadow: 2px 2px 5px rgba(0,0,0,0.15); word-break: keep-all;" id="winnerName">학생이름</h1>
             </div>
         </div>
     </div>
@@ -197,7 +195,10 @@
         if (!currentClass) {
             document.getElementById('statText').innerText = `총 0명 / 남은 0명`;
             listBox.innerHTML = '<div class="text-center text-muted mt-4" style="font-size: 0.9rem;">⚙️ 우측 상단의 관리 버튼을 눌러 반을 생성하세요.</div>';
-            if (resetDisplay) display.innerText = "반 추가 필요";
+            if (resetDisplay) {
+                display.innerText = "반 추가 필요";
+                display.style.fontSize = "4.5rem";
+            }
             document.getElementById('editingClassName').innerText = "(선택된 반 없음)";
             bulkInput.value = ""; bulkInput.disabled = true;
             saveBtn.disabled = true; pickBtn.disabled = true; resetBtn.disabled = true;
@@ -211,14 +212,20 @@
         
         if (data.total.length === 0) {
             listBox.innerHTML = '<div class="text-center text-muted mt-4" style="font-size: 0.9rem;">명단이 비어있습니다. 관리 메뉴에서 명단을 넣어주세요.</div>';
-            if (resetDisplay) display.innerText = "명단 입력 대기";
+            if (resetDisplay) {
+                display.innerText = "명단 입력 대기";
+                display.style.fontSize = "3.5rem";
+            }
             pickBtn.disabled = true;
         } else {
             listBox.innerHTML = data.total.map(name => {
                 const isPicked = data.picked.includes(name);
                 return `<span class="student-chip ${isPicked ? 'picked' : ''}">${name}</span>`;
             }).join('');
-            if (resetDisplay) display.innerText = "Ready!";
+            if (resetDisplay) {
+                display.innerText = "Ready!";
+                display.style.fontSize = "4.5rem";
+            }
             pickBtn.disabled = false;
         }
 
@@ -269,38 +276,73 @@
         const data = pickerDB[currentClass];
         const isRemove = document.getElementById('removeOption').checked;
         const pool = isRemove ? data.total.filter(n => !data.picked.includes(n)) : data.total;
+        
+        // 사용자가 입력한 뽑을 인원수 가져오기 (숫자가 아니면 1로 처리)
+        let pickCount = parseInt(document.getElementById('pickCount').value) || 1;
 
         if (pool.length === 0) return alert("모든 학생이 발표했습니다! 명단을 초기화해주세요.");
+        if (pickCount < 1) {
+            document.getElementById('pickCount').value = 1;
+            pickCount = 1;
+        }
+        if (pickCount > pool.length) return alert(`현재 남은 학생 수(${pool.length}명)보다 많이 뽑을 수 없습니다!`);
 
         const display = document.getElementById('display-area');
         const btn = document.getElementById('pickBtn');
         btn.disabled = true;
 
         let count = 0;
+        display.style.fontSize = "4.5rem"; // 애니메이션 중 폰트 크기 초기화
+
         const timer = setInterval(() => {
+            // 애니메이션 중에는 정신없지 않게 한 명 이름만 휙휙 돌아가게 연출
             display.innerText = pool[Math.floor(Math.random() * pool.length)];
             count++;
             
             if (count > 25) {
                 clearInterval(timer);
                 
-                const final = pool[Math.floor(Math.random() * pool.length)];
-                display.innerText = final; 
+                // 설정한 인원수만큼 중복 없이 랜덤 추출
+                let tempPool = [...pool];
+                let finalWinners = [];
+                for(let i=0; i<pickCount; i++) {
+                    const randIdx = Math.floor(Math.random() * tempPool.length);
+                    finalWinners.push(tempPool.splice(randIdx, 1)[0]);
+                }
+                
+                const finalStr = finalWinners.join(', ');
+                display.innerText = finalStr; 
+
+                // 인원수가 많아 이름이 길어지면 박스 안 벗어나게 글씨 크기 줄이기
+                if (finalStr.length > 5) {
+                    display.style.fontSize = finalStr.length > 15 ? "2rem" : "3rem";
+                }
 
                 if (isRemove) {
-                    data.picked.push(final);
+                    data.picked.push(...finalWinners);
                     saveAndRefresh(false); 
                 }
                 btn.disabled = false;
 
-                document.getElementById('winnerName').innerText = final;
+                // 팝업창(모달) 업데이트
+                const winnerNameEl = document.getElementById('winnerName');
+                winnerNameEl.innerText = finalStr;
+                // 모달창에서도 글씨 크기 조절
+                if (finalStr.length > 5) {
+                    winnerNameEl.className = "fw-bold mb-0"; // 기본 display-1 클래스 제거하여 너무 크지 않게
+                    winnerNameEl.style.fontSize = finalStr.length > 15 ? "2.5rem" : "4rem";
+                } else {
+                    winnerNameEl.className = "display-1 fw-bold mb-0";
+                    winnerNameEl.style.fontSize = "";
+                }
+
                 const winnerModal = new bootstrap.Modal(document.getElementById('winnerModal'));
                 winnerModal.show();
 
-                // 종이꽃가루도 파스텔톤으로 변경!
+                // 여러 명 뽑을 땐 폭죽도 더 화려하게! (기본 150 + 한명당 20개씩 추가)
                 confetti({
-                    particleCount: 150,
-                    spread: 80,
+                    particleCount: 150 + (pickCount * 20),
+                    spread: 90,
                     origin: { y: 0.6 },
                     colors: ['#ffb7b2', '#e2f0cb', '#b5ead7', '#c7ceea', '#ffdac1']
                 });
