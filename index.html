@@ -60,13 +60,14 @@
             text-decoration: line-through; box-shadow: none; border: none;
         }
         
-        /* 인원 조절 버튼 스타일 */
+        /* 인원 조절 버튼 */
         .counter-btn {
             background: #fff; color: var(--primary-color); font-weight: 900; font-size: 1.2rem;
             width: 45px; border: none; transition: 0.2s; cursor: pointer;
         }
         .counter-btn:hover { background: #ffe4e6; }
         
+        /* 메인 뽑기 버튼 */
         .btn-main { 
             border-radius: 16px; padding: 15px 25px; font-weight: 800; font-size: 1.2rem;
             background-color: var(--primary-color); border: none; color: white;
@@ -79,9 +80,27 @@
         }
         .btn-main:disabled { background-color: #fcaeb3; }
         
-        .btn-outline-custom { color: #b28b97; border-color: #e6d3d8; font-weight: 700; }
+        /* 옵션 버튼 (명단 초기화, 당첨자 제외) */
+        .btn-option {
+            border-radius: 12px; padding: 12px; font-weight: 700;
+            transition: all 0.2s;
+        }
+        .btn-outline-custom { color: #b28b97; border-color: #e6d3d8; background: #fff; }
         .btn-outline-custom:hover { background-color: #f7eef0; color: #8e6875; }
-        .btn-check:checked + .btn-outline-custom { background-color: #ff8b94; color: white; border-color: #ff8b94; }
+        
+        /* 직관적인 스위치 형태의 체크박스 */
+        .form-check-input:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        .toggle-switch-wrapper {
+            background: #fff; border: 1px solid #e6d3d8; border-radius: 12px;
+            padding: 10px 15px; display: flex; align-items: center; justify-content: center; gap: 10px;
+            cursor: pointer; transition: 0.2s;
+        }
+        .toggle-switch-wrapper:hover { background: #f7eef0; }
+        .toggle-switch-wrapper.active { background: #fff0f1; border-color: #ffb6bb; }
+
         .btn-config { border-radius: 12px; font-weight: bold; color: #5c4b51; background: #fff; }
     </style>
 </head>
@@ -93,6 +112,9 @@
             <h3 class="fw-bold m-0" style="color: #5c4b51;">🌸 발표자 뽑기</h3>
             <button class="btn btn-light btn-config shadow-sm border-0" data-bs-toggle="modal" data-bs-target="#adminModal">⚙️ 학급 관리</button>
         </div>
+
+        <audio id="bgm" src="bgm.mp3" loop></audio>
+        <audio id="winSound" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"></audio>
 
         <div class="mb-4">
             <select id="classSelect" class="form-select form-select-lg border-0 rounded-4 fw-bold text-center shadow-sm" style="background-color: #fff; color: var(--text-color);" onchange="renderUI(true)">
@@ -121,11 +143,20 @@
         </div>
 
         <div class="d-grid gap-3">
-            <button id="pickBtn" onclick="startRolling()" class="btn btn-main" disabled>두구두구 뽑기 시작!</button>
-            <div class="btn-group w-100 shadow-sm" style="border-radius: 12px; overflow: hidden;">
-                <button onclick="resetCurrentClass()" class="btn btn-outline-custom" style="background: #fff;" id="resetBtn" disabled>명단 초기화</button>
-                <input type="checkbox" class="btn-check" id="removeOption" checked onchange="checkMaxCount()">
-                <label class="btn btn-outline-custom" style="background: #fff;" for="removeOption">당첨자 제외</label>
+            <button id="pickBtn" onclick="startRolling()" class="btn btn-main" disabled>두구두구 뽑기 시작! 🎶</button>
+            
+            <div class="row g-2">
+                <div class="col-6">
+                    <button onclick="resetCurrentClass()" class="btn btn-outline-custom btn-option w-100 shadow-sm" id="resetBtn" disabled>🔄 명단 초기화</button>
+                </div>
+                <div class="col-6">
+                    <label class="toggle-switch-wrapper shadow-sm active" id="toggleWrapper">
+                        <span class="fw-bold" style="color: #b28b97;" id="toggleText">당첨자 제외 켜짐</span>
+                        <div class="form-check form-switch m-0">
+                            <input class="form-check-input fs-5" type="checkbox" role="switch" id="removeOption" checked onchange="toggleRemoveOption()">
+                        </div>
+                    </label>
+                </div>
             </div>
         </div>
     </div>
@@ -178,6 +209,7 @@
         updateClassDropdown();
         updateAdminModalList();
         renderUI(true);
+        toggleRemoveOption(); // 스위치 초기 상태 적용
     };
 
     function updateClassDropdown() {
@@ -246,10 +278,27 @@
         bulkInput.disabled = false; saveBtn.disabled = false;
         bulkInput.value = data.total.join(' ');
         
-        checkMaxCount(); // UI 렌더링 시 인원수 체크
+        checkMaxCount();
     }
 
-    // 🌟 버튼으로 인원수 조절하는 함수 🌟
+    // 🌟 직관적인 토글 버튼 로직 🌟
+    function toggleRemoveOption() {
+        const isChecked = document.getElementById('removeOption').checked;
+        const wrapper = document.getElementById('toggleWrapper');
+        const text = document.getElementById('toggleText');
+        
+        if (isChecked) {
+            wrapper.classList.add('active');
+            text.innerText = "당첨자 제외 켜짐";
+            text.style.color = "#ff8b94";
+        } else {
+            wrapper.classList.remove('active');
+            text.innerText = "당첨자 포함 (중복가능)";
+            text.style.color = "#b28b97";
+        }
+        checkMaxCount();
+    }
+
     function adjustCount(amount) {
         const input = document.getElementById('pickCount');
         let current = parseInt(input.value) || 1;
@@ -257,7 +306,6 @@
         
         if (next < 1) next = 1;
         
-        // 현재 남은 인원보다 많이 뽑지 못하게 막기
         const data = pickerDB[currentClass];
         if (data && data.total.length > 0) {
             const isRemove = document.getElementById('removeOption').checked;
@@ -274,7 +322,7 @@
     }
 
     function checkMaxCount() {
-        adjustCount(0); // 현재 값이 유효한지 재검사
+        adjustCount(0); 
     }
 
     function addClass() {
@@ -326,17 +374,27 @@
 
         const display = document.getElementById('display-area');
         const btn = document.getElementById('pickBtn');
-        btn.disabled = true;
+        const bgm = document.getElementById('bgm');
+        const winSound = document.getElementById('winSound');
 
-        let count = 0;
+        btn.disabled = true;
         display.style.fontSize = "4.5rem"; 
 
+        // 음악 재생 시작
+        bgm.play().catch(() => { console.log("음악 자동재생 차단됨"); });
+
+        let count = 0;
         const timer = setInterval(() => {
             display.innerText = pool[Math.floor(Math.random() * pool.length)];
             count++;
             
             if (count > 25) {
                 clearInterval(timer);
+                
+                // 음악 멈추고 효과음 재생
+                bgm.pause();
+                bgm.currentTime = 0;
+                winSound.play();
                 
                 let tempPool = [...pool];
                 let finalWinners = [];
