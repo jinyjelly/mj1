@@ -8,96 +8,21 @@
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-        :root { 
-            --primary-color: #ff8b94; 
-            --accent-color: #a8e6cf;  
-            --text-color: #5c4b51;    
-        }
-        body { 
-            background: linear-gradient(135deg, #fff1eb 0%, #ace0f9 100%); 
-            font-family: 'Pretendard', sans-serif; 
-            color: var(--text-color);
-            min-height: 100vh;
-        }
+        :root { --primary-color: #ff8b94; --accent-color: #a8e6cf; --text-color: #5c4b51; }
+        body { background: linear-gradient(135deg, #fff1eb 0%, #ace0f9 100%); font-family: 'Pretendard', sans-serif; color: var(--text-color); min-height: 100vh; }
         .main-container { max-width: 700px; margin: 40px auto; padding-bottom: 40px; }
-        
-        .glass-card { 
-            background: rgba(255, 255, 255, 0.85); 
-            backdrop-filter: blur(12px);
-            border-radius: 28px; 
-            box-shadow: 0 15px 35px rgba(255, 139, 148, 0.2); 
-            padding: 35px; 
-            border: 1px solid rgba(255, 255, 255, 0.8);
-        }
-        
-        #display-area { 
-            height: 220px; display: flex; align-items: center; justify-content: center; 
-            font-size: 4.5rem; font-weight: 900; color: var(--primary-color); 
-            background: #fff; border-radius: 24px; margin-bottom: 25px;
-            border: 3px dashed #ffc6c9; 
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.02);
-            transition: all 0.2s ease-in-out;
-            padding: 0 20px;
-            text-align: center;
-            word-break: keep-all; 
-        }
-        
-        .student-list-container {
-            background: rgba(255, 255, 255, 0.6); 
-            border-radius: 18px; padding: 15px;
-            border: 1px solid #fce3e4; min-height: 120px; max-height: 180px; overflow-y: auto;
-            transition: all 0.3s ease;
-        }
-        
-        .student-chip {
-            display: inline-block; padding: 6px 14px; margin: 4px;
-            background: #fff; border-radius: 20px; font-size: 0.95rem; color: #7a6b71;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
-            border: 1px solid #f5ecee;
-            transition: all 0.3s;
-        }
-        .student-chip.picked { 
-            background: #f7f1f2; color: #d1b8c0; 
-            text-decoration: line-through; box-shadow: none; border: none;
-        }
-        
-        .counter-btn {
-            background: #fff; color: var(--primary-color); font-weight: 900; font-size: 1.2rem;
-            width: 45px; border: none; transition: 0.2s; cursor: pointer;
-        }
-        .counter-btn:hover { background: #ffe4e6; }
-        
-        .btn-main { 
-            border-radius: 16px; padding: 15px 25px; font-weight: 800; font-size: 1.2rem;
-            background-color: var(--primary-color); border: none; color: white;
-            box-shadow: 0 6px 15px rgba(255, 139, 148, 0.3);
-            transition: 0.3s;
-        }
-        .btn-main:hover:not(:disabled) { 
-            background-color: #ff7480; transform: translateY(-3px); 
-            box-shadow: 0 8px 20px rgba(255, 139, 148, 0.4);
-        }
+        .glass-card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); border-radius: 28px; box-shadow: 0 15px 35px rgba(255, 139, 148, 0.2); padding: 35px; border: 1px solid rgba(255, 255, 255, 0.8); }
+        #display-area { height: 220px; display: flex; align-items: center; justify-content: center; font-size: 4.5rem; font-weight: 900; color: var(--primary-color); background: #fff; border-radius: 24px; margin-bottom: 25px; border: 3px dashed #ffc6c9; text-shadow: 2px 2px 4px rgba(0,0,0,0.02); transition: all 0.2s ease-in-out; padding: 0 20px; text-align: center; word-break: keep-all; }
+        .student-list-container { background: rgba(255, 255, 255, 0.6); border-radius: 18px; padding: 15px; border: 1px solid #fce3e4; min-height: 120px; max-height: 180px; overflow-y: auto; transition: all 0.3s ease; }
+        .student-chip { display: inline-block; padding: 6px 14px; margin: 4px; background: #fff; border-radius: 20px; font-size: 0.95rem; color: #7a6b71; box-shadow: 0 2px 5px rgba(0,0,0,0.03); border: 1px solid #f5ecee; transition: all 0.3s; }
+        .student-chip.picked { background: #f7f1f2; color: #d1b8c0; text-decoration: line-through; box-shadow: none; border: none; }
+        .counter-btn { background: #fff; color: var(--primary-color); font-weight: 900; font-size: 1.2rem; width: 45px; border: none; transition: 0.2s; cursor: pointer; }
+        .btn-main { border-radius: 16px; padding: 15px 25px; font-weight: 800; font-size: 1.2rem; background-color: var(--primary-color); border: none; color: white; box-shadow: 0 6px 15px rgba(255, 139, 148, 0.3); transition: 0.3s; }
+        .btn-main:hover:not(:disabled) { background-color: #ff7480; transform: translateY(-3px); box-shadow: 0 8px 20px rgba(255, 139, 148, 0.4); }
         .btn-main:disabled { background-color: #fcaeb3; }
-        
-        .btn-option {
-            border-radius: 12px; padding: 12px; font-weight: 700;
-            transition: all 0.2s;
-        }
+        .btn-option { border-radius: 12px; padding: 12px; font-weight: 700; transition: all 0.2s; }
         .btn-outline-custom { color: #b28b97; border-color: #e6d3d8; background: #fff; }
-        .btn-outline-custom:hover { background-color: #f7eef0; color: #8e6875; }
-        
-        .form-check-input:checked {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-        .toggle-switch-wrapper {
-            background: #fff; border: 1px solid #e6d3d8; border-radius: 12px;
-            padding: 10px 15px; display: flex; align-items: center; justify-content: center; gap: 10px;
-            cursor: pointer; transition: 0.2s;
-        }
-        .toggle-switch-wrapper:hover { background: #f7eef0; }
-        .toggle-switch-wrapper.active { background: #fff0f1; border-color: #ffb6bb; }
-
+        .toggle-switch-wrapper { background: #fff; border: 1px solid #e6d3d8; border-radius: 12px; padding: 10px 15px; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; transition: 0.2s; }
         .btn-config { border-radius: 12px; font-weight: bold; color: #5c4b51; background: #fff; }
     </style>
 </head>
@@ -127,9 +52,7 @@
                 </div>
                 <span id="statText" class="badge rounded-pill" style="background-color: #ffccd0; color: #d65a62; font-size: 0.85rem;">총 0명 / 남은 0명</span>
             </div>
-            
-            <div id="studentListBox" class="student-list-container text-start shadow-sm">
-            </div>
+            <div id="studentListBox" class="student-list-container text-start shadow-sm"></div>
         </div>
 
         <div class="d-flex justify-content-center align-items-center gap-3 mb-4 p-3 rounded-4" style="background: rgba(255,255,255,0.5);">
@@ -144,7 +67,6 @@
 
         <div class="d-grid gap-3">
             <button id="pickBtn" onclick="startRolling()" class="btn btn-main" disabled>두구두구 뽑기 시작! 🎶</button>
-            
             <div class="row g-2">
                 <div class="col-6">
                     <button onclick="resetCurrentClass()" class="btn btn-outline-custom btn-option w-100 shadow-sm" id="resetBtn" disabled>🔄 명단 초기화</button>
@@ -202,73 +124,71 @@
 </div>
 
 <script>
-    // --- 🎵 웹 브라우저 내장 효과음 생성기 (오디오 파일 불필요!) 🎵 ---
+    // --- 🎵 오디오 엔진 업데이트: 팡파르 & 폭죽 소리 생성기 🎵 ---
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    
+
     function playBeep() {
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        const oscillator = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        oscillator.type = 'triangle'; // 통통 튀는 전자음 느낌
-        oscillator.frequency.setValueAtTime(800 + Math.random() * 400, audioCtx.currentTime); // 무작위 높은 음
-        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime); // 볼륨 낮춤
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
-        oscillator.start();
-        oscillator.stop(audioCtx.currentTime + 0.1);
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(400 + Math.random() * 200, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.1);
     }
 
-    function playTada() {
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        const osc1 = audioCtx.createOscillator();
-        const osc2 = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        osc1.connect(gainNode); osc2.connect(gainNode); gainNode.connect(audioCtx.destination);
+    // 🎇 폭죽 터지는 소리 (노이즈 활용)
+    function playFireworkSound() {
+        const bufferSize = audioCtx.sampleRate * 0.5;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(1000, audioCtx.currentTime);
         
-        osc1.type = 'square'; osc2.type = 'square';
-        osc1.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
-        osc2.frequency.setValueAtTime(659.25, audioCtx.currentTime); // E5
-        
-        // 빰! 빠밤!! 느낌
-        osc1.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.15); // G5
-        osc2.frequency.setValueAtTime(1046.50, audioCtx.currentTime + 0.15); // C6
-        
-        gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-        gainNode.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.05);
-        gainNode.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 0.15);
-        gainNode.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.2);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.5);
-        
-        osc1.start(); osc2.start();
-        osc1.stop(audioCtx.currentTime + 1.5); osc2.stop(audioCtx.currentTime + 1.5);
+        const gain = audioCtx.createGain();
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+
+        noise.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
+        noise.start();
     }
-    // -----------------------------------------------------------
+
+    // 🎺 승리의 팡파르 연주
+    function playFanfare() {
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // 도, 미, 솔, 도 (C Major)
+        notes.forEach((freq, i) => {
+            setTimeout(() => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.8);
+                if(i === notes.length - 1) playFireworkSound(); // 마지막 음에 폭죽 쾅!
+            }, i * 150);
+        });
+    }
+    // -------------------------------------------------------------------
 
     let pickerDB = JSON.parse(localStorage.getItem('mathPickerDB_v3')) || {};
     let currentClass = Object.keys(pickerDB)[0] || "";
     let isListVisible = true;
 
-    window.onload = () => {
-        updateClassDropdown();
-        updateAdminModalList();
-        renderUI(true);
-        toggleRemoveOption(); 
-    };
+    window.onload = () => { updateClassDropdown(); updateAdminModalList(); renderUI(true); toggleRemoveOption(); };
 
     function updateClassDropdown() {
         const select = document.getElementById('classSelect');
         const keys = Object.keys(pickerDB);
-        
-        if (keys.length === 0) {
-            select.innerHTML = '<option value="">-- 반을 추가해주세요 --</option>';
-            select.disabled = true;
-        } else {
-            select.disabled = false;
-            select.innerHTML = keys.map(name => 
-                `<option value="${name}" ${name === currentClass ? 'selected' : ''}>${name}</option>`
-            ).join('');
-        }
+        if (keys.length === 0) { select.innerHTML = '<option value="">-- 반을 추가해주세요 --</option>'; select.disabled = true; } 
+        else { select.disabled = false; select.innerHTML = keys.map(name => `<option value="${name}" ${name === currentClass ? 'selected' : ''}>${name}</option>`).join(''); }
     }
 
     function renderUI(resetDisplay = false) {
@@ -282,250 +202,120 @@
 
         if (!currentClass) {
             document.getElementById('statText').innerText = `총 0명 / 남은 0명`;
-            listBox.innerHTML = '<div class="text-center text-muted mt-4" style="font-size: 0.9rem;">⚙️ 우측 상단의 관리 버튼을 눌러 반을 생성하세요.</div>';
-            if (resetDisplay) {
-                display.innerText = "반 추가 필요";
-                display.style.fontSize = "4.5rem";
-            }
-            document.getElementById('editingClassName').innerText = "(선택된 반 없음)";
-            bulkInput.value = ""; bulkInput.disabled = true;
-            saveBtn.disabled = true; pickBtn.disabled = true; resetBtn.disabled = true;
+            listBox.innerHTML = '<div class="text-center text-muted mt-4">⚙️ 관리 버튼을 눌러 반을 생성하세요.</div>';
+            if (resetDisplay) display.innerText = "반 추가 필요";
+            bulkInput.disabled = true; saveBtn.disabled = true; pickBtn.disabled = true; resetBtn.disabled = true;
             return;
         }
 
         const data = pickerDB[currentClass];
         const remainCount = data.total.length - data.picked.length;
-        
         document.getElementById('statText').innerText = `총 ${data.total.length}명 / 남은 ${remainCount}명`;
         
-        if (data.total.length === 0) {
-            listBox.innerHTML = '<div class="text-center text-muted mt-4" style="font-size: 0.9rem;">명단이 비어있습니다. 관리 메뉴에서 명단을 넣어주세요.</div>';
-            if (resetDisplay) {
-                display.innerText = "명단 입력 대기";
-                display.style.fontSize = "3.5rem";
-            }
-            pickBtn.disabled = true;
-        } else {
-            listBox.innerHTML = data.total.map(name => {
-                const isPicked = data.picked.includes(name);
-                return `<span class="student-chip ${isPicked ? 'picked' : ''}">${name}</span>`;
-            }).join('');
-            if (resetDisplay) {
-                display.innerText = "Ready!";
-                display.style.fontSize = "4.5rem";
-            }
+        if (data.total.length === 0) { listBox.innerHTML = '<div class="text-center text-muted mt-4">명단을 넣어주세요.</div>'; if (resetDisplay) display.innerText = "명단 입력 대기"; pickBtn.disabled = true; } 
+        else {
+            listBox.innerHTML = data.total.map(name => `<span class="student-chip ${data.picked.includes(name) ? 'picked' : ''}">${name}</span>`).join('');
+            if (resetDisplay) display.innerText = "Ready!";
             pickBtn.disabled = false;
         }
-
-        resetBtn.disabled = false;
-        document.getElementById('editingClassName').innerText = `[ ${currentClass} 편집 중 ]`;
-        bulkInput.disabled = false; saveBtn.disabled = false;
+        resetBtn.disabled = false; bulkInput.disabled = false; saveBtn.disabled = false;
         bulkInput.value = data.total.join(' ');
-        
-        checkMaxCount();
-        applyListVisibility(); 
+        checkMaxCount(); applyListVisibility(); 
     }
 
-    function toggleList() {
-        isListVisible = !isListVisible;
-        applyListVisibility();
-    }
-
+    function toggleList() { isListVisible = !isListVisible; applyListVisibility(); }
     function applyListVisibility() {
         const listContainer = document.getElementById('studentListBox');
         const btn = document.getElementById('toggleListBtn');
-        if (!listContainer || !btn) return;
-
-        if (isListVisible) {
-            listContainer.style.display = 'block';
-            btn.innerText = '🙈 명단 숨기기';
-            btn.style.color = '#b28b97';
-        } else {
-            listContainer.style.display = 'none';
-            btn.innerText = '👁️ 명단 보이기';
-            btn.style.color = '#ff8b94';
-        }
+        if (isListVisible) { listContainer.style.display = 'block'; btn.innerText = '🙈 명단 숨기기'; } 
+        else { listContainer.style.display = 'none'; btn.innerText = '👁️ 명단 보이기'; }
     }
 
     function toggleRemoveOption() {
         const isChecked = document.getElementById('removeOption').checked;
-        const wrapper = document.getElementById('toggleWrapper');
         const text = document.getElementById('toggleText');
-        
-        if (isChecked) {
-            wrapper.classList.add('active');
-            text.innerText = "당첨자 제외 켜짐";
-            text.style.color = "#ff8b94";
-        } else {
-            wrapper.classList.remove('active');
-            text.innerText = "당첨자 포함 (중복가능)";
-            text.style.color = "#b28b97";
-        }
+        document.getElementById('toggleWrapper').classList.toggle('active', isChecked);
+        text.innerText = isChecked ? "당첨자 제외 켜짐" : "당첨자 포함 (중복가능)";
+        text.style.color = isChecked ? "#ff8b94" : "#b28b97";
         checkMaxCount();
     }
 
     function adjustCount(amount) {
         const input = document.getElementById('pickCount');
-        let current = parseInt(input.value) || 1;
-        let next = current + amount;
-        
-        if (next < 1) next = 1;
-        
+        let next = (parseInt(input.value) || 1) + amount;
         const data = pickerDB[currentClass];
-        if (data && data.total.length > 0) {
-            const isRemove = document.getElementById('removeOption').checked;
-            const poolSize = isRemove ? data.total.length - data.picked.length : data.total.length;
-            
-            if (next > poolSize) {
-                if (poolSize === 0) alert("모든 학생이 뽑혔습니다. 초기화 해주세요.");
-                else alert(`현재 뽑을 수 있는 최대 인원은 ${poolSize}명입니다.`);
-                next = poolSize;
-            }
+        if (data) {
+            const poolSize = document.getElementById('removeOption').checked ? data.total.length - data.picked.length : data.total.length;
+            if (next > poolSize) next = poolSize;
         }
-        
-        input.value = Math.max(1, next);
+        input.value = Math.max(1, next || 1);
     }
-
-    function checkMaxCount() {
-        adjustCount(0); 
-    }
+    function checkMaxCount() { adjustCount(0); }
 
     function addClass() {
         const name = document.getElementById('newClassName').value.trim();
-        if (!name) return alert("반 이름을 입력해주세요!");
-        if (pickerDB[name]) return alert("이미 존재하는 반 이름입니다.");
-        
-        pickerDB[name] = { total: [], picked: [] };
-        currentClass = name;
+        if (name && !pickerDB[name]) { pickerDB[name] = { total: [], picked: [] }; currentClass = name; saveAndRefresh(true); }
         document.getElementById('newClassName').value = '';
-        saveAndRefresh(true);
     }
 
-    function deleteClass(name) {
-        if (confirm(`정말 '${name}'을(를) 삭제하시겠습니까?`)) {
-            delete pickerDB[name];
-            currentClass = Object.keys(pickerDB)[0] || "";
-            saveAndRefresh(true);
-        }
-    }
-
+    function deleteClass(name) { if (confirm(`'${name}'을(를) 삭제할까요?`)) { delete pickerDB[name]; currentClass = Object.keys(pickerDB)[0] || ""; saveAndRefresh(true); } }
     function saveBulkNames() {
-        if (!currentClass) return;
-        const raw = document.getElementById('bulkNameInput').value;
-        const names = raw.split(/[\s,]+/).filter(n => n.trim() !== "");
-        
-        pickerDB[currentClass].total = names;
-        pickerDB[currentClass].picked = [];
+        const names = document.getElementById('bulkNameInput').value.split(/[\s,]+/).filter(n => n.trim() !== "");
+        pickerDB[currentClass].total = names; pickerDB[currentClass].picked = [];
         saveAndRefresh(true);
-        alert(`[${currentClass}] 명단이 저장되었습니다!`);
     }
-
-    function resetCurrentClass() {
-        if (currentClass && confirm("이미 발표한 아이들의 기록을 지우고 다시 가득 채울까요?")) {
-            pickerDB[currentClass].picked = [];
-            saveAndRefresh(true);
-        }
-    }
+    function resetCurrentClass() { if (confirm("기록을 초기화할까요?")) { pickerDB[currentClass].picked = []; saveAndRefresh(true); } }
 
     function startRolling() {
-        // 브라우저 오디오 권한 활성화 (첫 클릭 시 필요)
         if (audioCtx.state === 'suspended') audioCtx.resume();
-
         const data = pickerDB[currentClass];
-        const isRemove = document.getElementById('removeOption').checked;
-        const pool = isRemove ? data.total.filter(n => !data.picked.includes(n)) : data.total;
-        
+        const pool = document.getElementById('removeOption').checked ? data.total.filter(n => !data.picked.includes(n)) : data.total;
         let pickCount = parseInt(document.getElementById('pickCount').value) || 1;
 
-        if (pool.length === 0) return alert("모든 학생이 발표했습니다! 명단을 초기화해주세요.");
-        if (pickCount > pool.length) return alert(`현재 남은 학생 수(${pool.length}명)보다 많이 뽑을 수 없습니다!`);
+        if (pool.length === 0 || pickCount > pool.length) return alert("인원수를 확인해주세요!");
 
         const display = document.getElementById('display-area');
         const btn = document.getElementById('pickBtn');
-
         btn.disabled = true;
-        display.style.fontSize = "4.5rem"; 
 
         let count = 0;
         const timer = setInterval(() => {
             display.innerText = pool[Math.floor(Math.random() * pool.length)];
-            
-            // 이름이 바뀔 때마다 뿅뿅거리는 효과음 재생
             playBeep();
-            
-            count++;
-            
-            if (count > 25) {
+            if (++count > 25) {
                 clearInterval(timer);
-                
-                // 당첨 시 짜잔! 하는 효과음 재생
-                playTada();
+                playFanfare(); // 🎉 팡파르 & 폭죽 소리!!
                 
                 let tempPool = [...pool];
                 let finalWinners = [];
-                for(let i=0; i<pickCount; i++) {
-                    const randIdx = Math.floor(Math.random() * tempPool.length);
-                    finalWinners.push(tempPool.splice(randIdx, 1)[0]);
-                }
+                for(let i=0; i<pickCount; i++) finalWinners.push(tempPool.splice(Math.floor(Math.random() * tempPool.length), 1)[0]);
                 
-                const finalStr = finalWinners.join(', ');
-                display.innerText = finalStr; 
+                display.innerText = finalWinners.join(', ');
+                display.style.fontSize = finalWinners.join(', ').length > 15 ? "2rem" : "3rem";
 
-                if (finalStr.length > 5) {
-                    display.style.fontSize = finalStr.length > 15 ? "2rem" : "3rem";
-                }
-
-                if (isRemove) {
-                    data.picked.push(...finalWinners);
-                    saveAndRefresh(false); 
-                }
+                if (document.getElementById('removeOption').checked) data.picked.push(...finalWinners);
+                saveAndRefresh(false);
                 btn.disabled = false;
 
-                const winnerNameEl = document.getElementById('winnerName');
-                winnerNameEl.innerText = finalStr;
-                if (finalStr.length > 5) {
-                    winnerNameEl.className = "fw-bold mb-0"; 
-                    winnerNameEl.style.fontSize = finalStr.length > 15 ? "2.5rem" : "4rem";
-                } else {
-                    winnerNameEl.className = "display-1 fw-bold mb-0";
-                    winnerNameEl.style.fontSize = "";
-                }
+                document.getElementById('winnerName').innerText = finalWinners.join(', ');
+                new bootstrap.Modal(document.getElementById('winnerModal')).show();
 
-                const winnerModal = new bootstrap.Modal(document.getElementById('winnerModal'));
-                winnerModal.show();
-
-                confetti({
-                    particleCount: 150 + (pickCount * 20),
-                    spread: 90,
-                    origin: { y: 0.6 },
-                    colors: ['#ffb7b2', '#e2f0cb', '#b5ead7', '#c7ceea', '#ffdac1']
-                });
+                confetti({ particleCount: 200, spread: 100, origin: { y: 0.6 }, colors: ['#ffb7b2', '#e2f0cb', '#b5ead7', '#c7ceea', '#ffdac1'] });
             }
-        }, 70); // 뽑히는 속도 (70ms)
+        }, 60);
     }
 
     function saveAndRefresh(resetDisplay = false) {
         localStorage.setItem('mathPickerDB_v3', JSON.stringify(pickerDB));
-        updateClassDropdown();
-        updateAdminModalList();
-        renderUI(resetDisplay);
+        updateClassDropdown(); updateAdminModalList(); renderUI(resetDisplay);
     }
 
     function updateAdminModalList() {
-        const listGroup = document.getElementById('classListGroup');
-        const keys = Object.keys(pickerDB);
-        
-        if (keys.length === 0) {
-            listGroup.innerHTML = '<li class="list-group-item border-0 text-muted small">등록된 반이 없습니다.</li>';
-            return;
-        }
-
-        listGroup.innerHTML = keys.map(name => `
-            <li class="list-group-item border-0 border-bottom d-flex justify-content-between align-items-center" style="background: transparent;">
+        document.getElementById('classListGroup').innerHTML = Object.keys(pickerDB).map(name => `
+            <li class="list-group-item d-flex justify-content-between align-items-center" style="background:transparent; border-bottom:1px solid #eee;">
                 <strong>${name}</strong>
-                <button class="btn btn-sm text-danger border-0" style="background: #ffeeef; font-weight: bold;" onclick="deleteClass('${name}')">삭제</button>
-            </li>
-        `).join('');
+                <button class="btn btn-sm text-danger border-0" style="background:#ffeeef;" onclick="deleteClass('${name}')">삭제</button>
+            </li>`).join('');
     }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
