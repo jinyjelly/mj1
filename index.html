@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>스마트 발표자 뽑기 - 수학 시간</title>
+    <title>스마트 발표자 뽑기 - 파스텔 봄 테마</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -110,9 +110,6 @@
             <button class="btn btn-light btn-config shadow-sm border-0" data-bs-toggle="modal" data-bs-target="#adminModal">⚙️ 학급 관리</button>
         </div>
 
-        <audio id="bgm" src="bgm.mp3" loop></audio>
-        <audio id="winSound" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"></audio>
-
         <div class="mb-4">
             <select id="classSelect" class="form-select form-select-lg border-0 rounded-4 fw-bold text-center shadow-sm" style="background-color: #fff; color: var(--text-color);" onchange="renderUI(true)">
             </select>
@@ -205,9 +202,52 @@
 </div>
 
 <script>
+    // --- 🎵 웹 브라우저 내장 효과음 생성기 (오디오 파일 불필요!) 🎵 ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playBeep() {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.type = 'triangle'; // 통통 튀는 전자음 느낌
+        oscillator.frequency.setValueAtTime(800 + Math.random() * 400, audioCtx.currentTime); // 무작위 높은 음
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime); // 볼륨 낮춤
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.1);
+    }
+
+    function playTada() {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc1 = audioCtx.createOscillator();
+        const osc2 = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc1.connect(gainNode); osc2.connect(gainNode); gainNode.connect(audioCtx.destination);
+        
+        osc1.type = 'square'; osc2.type = 'square';
+        osc1.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+        osc2.frequency.setValueAtTime(659.25, audioCtx.currentTime); // E5
+        
+        // 빰! 빠밤!! 느낌
+        osc1.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.15); // G5
+        osc2.frequency.setValueAtTime(1046.50, audioCtx.currentTime + 0.15); // C6
+        
+        gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.05);
+        gainNode.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 0.15);
+        gainNode.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.2);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.5);
+        
+        osc1.start(); osc2.start();
+        osc1.stop(audioCtx.currentTime + 1.5); osc2.stop(audioCtx.currentTime + 1.5);
+    }
+    // -----------------------------------------------------------
+
     let pickerDB = JSON.parse(localStorage.getItem('mathPickerDB_v3')) || {};
     let currentClass = Object.keys(pickerDB)[0] || "";
-    let isListVisible = true; // 명단 숨기기 상태 변수
+    let isListVisible = true;
 
     window.onload = () => {
         updateClassDropdown();
@@ -283,10 +323,9 @@
         bulkInput.value = data.total.join(' ');
         
         checkMaxCount();
-        applyListVisibility(); // UI 렌더링 시 숨기기 상태 유지
+        applyListVisibility(); 
     }
 
-    // 🌟 명단 숨기기/보이기 로직 🌟
     function toggleList() {
         isListVisible = !isListVisible;
         applyListVisibility();
@@ -378,7 +417,7 @@
         pickerDB[currentClass].total = names;
         pickerDB[currentClass].picked = [];
         saveAndRefresh(true);
-        alert(`[${currentClass}] 명단이 예쁘게 저장되었습니다! 🌸`);
+        alert(`[${currentClass}] 명단이 저장되었습니다!`);
     }
 
     function resetCurrentClass() {
@@ -389,6 +428,9 @@
     }
 
     function startRolling() {
+        // 브라우저 오디오 권한 활성화 (첫 클릭 시 필요)
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
         const data = pickerDB[currentClass];
         const isRemove = document.getElementById('removeOption').checked;
         const pool = isRemove ? data.total.filter(n => !data.picked.includes(n)) : data.total;
@@ -400,25 +442,24 @@
 
         const display = document.getElementById('display-area');
         const btn = document.getElementById('pickBtn');
-        const bgm = document.getElementById('bgm');
-        const winSound = document.getElementById('winSound');
 
         btn.disabled = true;
         display.style.fontSize = "4.5rem"; 
 
-        bgm.play().catch(() => { console.log("음악 자동재생 차단됨"); });
-
         let count = 0;
         const timer = setInterval(() => {
             display.innerText = pool[Math.floor(Math.random() * pool.length)];
+            
+            // 이름이 바뀔 때마다 뿅뿅거리는 효과음 재생
+            playBeep();
+            
             count++;
             
             if (count > 25) {
                 clearInterval(timer);
                 
-                bgm.pause();
-                bgm.currentTime = 0;
-                winSound.play();
+                // 당첨 시 짜잔! 하는 효과음 재생
+                playTada();
                 
                 let tempPool = [...pool];
                 let finalWinners = [];
@@ -460,7 +501,7 @@
                     colors: ['#ffb7b2', '#e2f0cb', '#b5ead7', '#c7ceea', '#ffdac1']
                 });
             }
-        }, 50);
+        }, 70); // 뽑히는 속도 (70ms)
     }
 
     function saveAndRefresh(resetDisplay = false) {
